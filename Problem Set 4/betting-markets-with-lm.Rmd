@@ -1,0 +1,668 @@
+---
+title: "Bonus Problem Set 4"
+author: "Alin Ierima"
+output:
+  pdf_document: default
+  html_document: default
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Predicting Elections Using Betting Markets and Linear Models
+
+Earlier in the fall term, we studied the prediction of election outcomes
+using polls. Here, we study the prediction of election outcomes based on
+betting markets. In particular, we analyze data for the 2008 and 2012 US
+presidential elections from the online betting company, *Intrade* [(for
+those interested, see an interview about Intrade
+here)](https://www.washingtonpost.com/video/business/economy/the-demise-of-intrade-does-it-matter--wonktalk/2013/03/11/a15678ce-8a66-11e2-8d72-dc76641cb8d4_video.html).
+At *Intrade*, people trade contracts such as 'Obama to win the electoral
+votes of Florida.' Each contract's market price fluctuates based on its
+sales.
+
+Why might we expect betting markets like *Intrade* to accurately predict
+the outcomes of elections or of other events? Some argue that the market
+can aggregate available information efficiently [(*for more see
+here*)](https://d3.harvard.edu/platform-digit/submission/intrade-crowdsourced-wisdom/).
+In this exercise, we will test this *efficient market hypothesis* by
+analyzing the market prices of contracts for Democratic and Republican
+nominees' victories in each state.
+
+The data files for 2008 is available in CSV format as `intrade08.csv`.
+The variables in this dataset are:
+
+| Name        | Description                                                         |
+|:-----------------|:-----------------------------------------------------|
+| `day`       | Date of the session                                                 |
+| `statename` | Full name of each state (including District of Columbia in 2008)    |
+| `state`     | Abbreviation of each state (including District of Columbia in 2008) |
+| `PriceD`    | Closing price (predicted vote share) of Democratic Nominee's market |
+| `PriceR`    | Closing price (predicted vote share) of Republican Nominee's market |
+| `VolumeD`   | Total session trades of Democratic Party Nominee's market           |
+| `VolumeR`   | Total session trades of Republican Party Nominee's market           |
+
+Each row represents *daily* trading information about the contracts for
+either the Democratic or Republican Party nominee's victory in a
+particular state.
+
+We will also use the election outcome data. This data file is
+`pres08.csv` with variables:
+
+| Name         | Description                                      |
+|:-------------|:-------------------------------------------------|
+| `state.name` | Full name of state (only in `pres2008`)          |
+| `state`      | Two letter state abbreviation                    |
+| `Obama`      | Vote percentage for Obama                        |
+| `McCain`     | Vote percentage for McCain                       |
+| `EV`         | Number of electoral college votes for this state |
+
+## Question 1 (15 points)
+
+In this problem set we are interested in the relationship between the
+price margins of the *Intrade* market and the actual margin of victory
+at the 2008 presidential elections. To study this relationship you will
+regress Obama's actual margin of victory (outcome variable) on Obama's
+price margin (predictor) from the *Intrade* markets in each state. You
+will do so using a loop in question 2. But first, we need to do some
+preparatory steps. Follow the below instructions:
+
+-   Load the *Intrade* (`intrade08.csv`) and the Election outcome data
+    `pres08.csv` for 2008 and combine them together by `state` using the
+    `merge` function. You can assigned the merged dataset to a new
+    object called `intresults08`. *Hint: see a simple example how to use
+    the merge function at the bottom of this document.*
+-   Create a `DaysToElection` variable by subtracting each *Intrade*
+    session date in the dataset (variable `day`) from the day of the
+    election (4th of November 2008). Below you can find guidelines how
+    to achieve this. (9 points)
+    -   Hint: Notice that the `day` variable is a character variable in
+        the form "2008-02-28", "2008-03-17" (general format
+        `YYYY-MM-DD`). In order to be able to do any numeric operations
+        with date variables (like calculate the number of days between
+        two given dates), you first need to transform this character
+        variable to a variable of date format. Otherwise R does not know
+        that this variable contains dates information. You can transform
+        a character variable to a date format using the function
+        `as.Date(x, format)`. *See a simple example how to use the merge
+        function at the bottom of this document.*
+-   Inside the `intresults08` object, create a *state margin of victory*
+    variable (our outcome variable, call it `obama.actmarg`) - this is
+    the difference in the vote percentage between Obama and McCain for
+    each state. (3 points)
+-   Inside the `intresults08` object, create a *betting market margin*
+    (our predictor, call it `obama.intmarg`) - this is the difference in
+    the *closing price (predicted vote share)* for Obama (Democratic
+    candidate) and McCain (Republican candidate). (3 points)
+
+## Answer 1
+
+```{r, echo = F}
+intrade08 <- read.csv("data/intrade08.csv")
+pres08 <- read.csv("data/pres08.csv")
+```
+
+**For your information - the first few observations in the merged
+dataset**
+
+```{r}
+intresults08 = merge (x=intrade08, y=pres08, by.x = "state", by.y = "state", all.x= T)
+
+head(intresults08)
+```
+
+**For your information - the first few observations in the
+`DaysToElection` variable**
+
+```{r}
+ intresults08$day = as.Date(intresults08$day, format="%Y-%m-%d")
+ intrade08$day = as.Date(intrade08$day, format="%Y-%m-%d")
+ election_date = "2008-11-04"
+ election_date = as.Date (election_date, format="%Y-%m-%d")
+ 
+ intresults08$DaysToElection = election_date - intresults08$day 
+ 
+ 
+ head(intresults08$DaysToElection)
+ 
+```
+
+**For your information - the first few observations in the betting
+market margin variable**
+
+```{r}
+intresults08$obama.intmarg =  intresults08$PriceD - intresults08$PriceR
+head(intresults08$obama.intmarg)
+```
+
+**For your information - the first few observations in the state margin
+of victory variable**
+
+```{r}
+intresults08$obama.actmarg = intresults08$Obama - intresults08$McCain
+head(intresults08$obama.actmarg)
+```
+
+## Question 2 (15 points)
+
+-   Consider only the trading one day from the election (trading on the
+    3rd of November 2008) and regress Obama's actual margin of victory
+    (`obama.actmarg`) on Obama's price margin (`obama.intmarg`). Hint\*:
+    Make a subset of the data where `DaysToElection` is equal to 1. Then
+    predict Obama's actual electoral margins with Obama's trading
+    margins using a linear regression model. (5 points)
+-   Let us visualize the fitted model. How would you visualize the
+    predictions and the outcomes together? Follow the guidelines below:
+    (4 points)
+    -   Make a scatterplot, where you plot the actual electoral margins
+        (y-axis) against the trading margin.
+    -   Add the fitted regression line (line of best fit) to the plot.
+        Hint: because we only have one predictor you can use `abline`
+        for the line of best fit.
+    -   Color the solid points in *"steelblue2"* with transparency level
+        0.5, and the fitted line in *"orangered"*. Add dashed horizontal
+        and vertical lines at 0 in gray (*"gray20"*)
+-   What do we find? Shortly discuss your findings in the text. (3
+    points)
+-   Does the linear regression model predict well? Elaborate your
+    thinking. (Hint: think about what statistic we use to evaluate the
+    model fit.) (3 points)
+
+## Answer 2
+
+**For your information - the first few observations in the subset one
+day before the election**
+
+```{r}
+one_day = intresults08[intresults08$DaysToElection == 1, ]
+head(one_day)
+```
+
+**Linear Model Results**
+
+```{r}
+model = lm(obama.actmarg ~ obama.intmarg, data = one_day)
+model
+```
+
+**Scatterplot with the line of best fit**
+
+```{r}
+plot(one_day$obama.intmarg, one_day$obama.actmarg,pch=16, col = adjustcolor("steelblue2", alpha = 0.5), ylim= c(-60,80), xlab="Market's margin for Obama", ylab="Obama's electoral margin")
+abline(model, col = "orangered")
+abline(h = 0, col = "gray20", lty = 2)
+abline(v = 0, col = "gray20", lty = 2)
+```
+
+**R\^2 from the above model**
+
+```{r}
+summary(model)$r.squared
+```
+
+[Insert your answer here:]{style="color: green;"} Considering R squared
+goes from 0 to 1, a score of 0.73 means that the model fits the data
+quite nicely. Essentially, 73% of the variation can be explained by this
+model. This shows that the market is quite efficient at predicting
+electoral outcomes, or at least more than chance.
+
+## Question 3 (20 points)
+
+Even efficient markets aren't omniscient. Information comes in about the
+election every day and the market prices should reflect any change in
+information that seem to matter to the outcome.
+
+We can examine how and about what the markets change their minds by
+looking at which states they are confident about, and which they
+**update** their 'opinions' (i.e. their prices) about.
+
+Over the period before the election, let's see how prices for each state
+are evolving. We can get a compact summary of price movement by fitting
+a linear model to Obama's market margin for *each state* over the 20
+days before the election using days to election as a predictor.
+
+We will summarise *price movement* by the direction (up or down) and
+rate of change (large or small) of price over time. This is basically
+also what people in finance do, but they get paid more...
+
+-   Ultimately our goal is to fit linear models in each state using a
+    loop, but here we will start with one state - West Virginia. For
+    West Virginia:
+    -   Concentrate only on the last 20 days before the election. (Hint:
+        Make a subset, where `DaysToElection` is smaller or equal to 20)
+        (4 points)
+    -   Model the relationship between Obama's market margin and days to
+        election with a linear regression model (4 points)
+    -   Plot Obama's market margin (y-axis) against the number of days
+        until the election (x-axis) (4 points)
+    -   Show on the plot the model's predictions for each day starting
+        from the 20th to the 0 day before elections. (4 points) (Hint:
+        think about what approach we use to show the predictions of the
+        outcome for different values of the predictor variable.)
+-   What does this model's slope coefficient tells us about which
+    direction the margin is changing and also how fast it is changing?
+    (4 points)
+
+## Answer 3
+
+**For your information: the first few observations in West Virginia 20
+days before elections**
+
+```{r}
+twenty_days =  intresults08[intresults08$DaysToElection <= 20 & intresults08$state== "WV" ,]
+head(twenty_days)
+
+```
+
+**Linear Model Results for Obama's Martket Margit**
+
+```{r}
+lm_twenty_days = lm(obama.intmarg ~ DaysToElection, data=twenty_days)
+lm_twenty_days
+```
+
+**Plot Obama's market margin over time with a line of best fit**
+
+```{r}
+plot(twenty_days$DaysToElection,twenty_days$obama.intmarg, xlim = c(25,0), ylim=c(-100,0), pch=16, col = adjustcolor("steelblue2", alpha = 0.7), xlab="Days To Election", ylab="Market's margin for Obama-")
+abline(lm_twenty_days, col= "orangered")
+```
+
+[Insert your answer here:]{style="color: green;"}The slope shows that as
+the days progress and we get closer to the election day, the market's
+price margin for Obama increases by 3.546 for each day. This implies a
+fast change in market opinions towards Obama as we approach the
+elections.
+
+## Question 4 (25 points)
+
+Now we would like to have a summary of the price movement for *each
+state* over the 20 days before the election. We will hence do the same
+regression model as in question 3, but this time for **all states using
+a loop**:
+
+Specifically, use a loop which runs a linear model with Obama's market
+margin as the outcome variable and the`DaysToElection` as a predictor
+variable. Run a linear model for *each state* focusing on market's
+betting for the last 20 days. Follow the below steps:
+
+-   loop over each state. Inside the loop:
+    -   Make a subset for each state 20 days before elections (including
+        the 20th day). (5 points)
+    -   Model the relationship between days to election and Obama's
+        market margin with a linear regression model.(Hint: regress
+        Obama's market margin on days to election for this subset.) (10
+        points)
+    -   Collect the slope coefficients (the coefficient for the effect
+        of `DaysToElection`, not the intercept coefficient) from each
+        state model and save these in an empty container for the
+        corresponding state. You will need this information later to see
+        how volatile the state estimates are. (Hint: before you do the
+        loop, create an empty container called `change`, where you will
+        save the effect of days to election on Obama's betting market
+        margin for each state. Name each observation with the state
+        names.) (5 points)
+-   Plot the slope coefficients from all states (the values you saved in
+    the empty container `change`) using a histogram. Shortly interpret
+    the histogram and discuss your findings. (5 points)
+
+## Answer 4
+
+**For your information: the empty container where you will save the
+regression slopes for each state**
+
+```{r}
+states = unique(intresults08$statename)
+change = rep(NA, length(states))
+names(change) = states
+change
+```
+
+**Filled empty container with the regression slopes (using a loop).
+Note: For presentation reasons we show below the regression slopes
+rounded to 4 digits**
+
+```{r}
+for (i in states) {
+  state_subset =intresults08[intresults08$statename == i & intresults08$DaysToElection <= 20, ]
+ days_obama_model =lm(state_subset$obama.intmarg ~ DaysToElection, data = state_subset)
+  slope_coefficient = coef(days_obama_model)["DaysToElection"]
+  change[i] =slope_coefficient
+}
+round(change,4)
+```
+
+**Distribution of the slope coefficients**
+
+```{r}
+hist(change, freq=F, ylim = c(0,1), breaks = 15, col = "green3", xlab="Change in Obama's Market Margin")
+```
+
+[Insert your answer here:]{style="color: green;"}In the last 20 days,
+most of the slope coefficients are around -0.5-0, indicating that as
+time went by, markets were changing their bets on who will win the
+election generally towards Obama.
+
+## Bonus Question 5 (20 points)
+
+-   Do the same plot as in question 3, but this time for all states
+    **using a loop**. Specifically:
+
+    -   plot the relationship between Obama's market margin and days
+        until election
+    -   add to the plot a line of best fit from the fitted linear model
+        for this state
+    -   concentrate only on the observations 20 days before elections
+        (including the 20th day)
+
+-   Make 1 graph with the first 25 states as separate plots (5 rows and
+    5 columns). Make sure to include the state name in each plot. You
+    can do this inside the loop. Hint: the function `paste("some text")`
+    might be useful here. You can find a similar example in one of our
+    class sessions on loops and graphs (10 points)
+
+-   Make 1 graph with the remaining 26 plots (6 rows and 5 columns).
+    Also here make sure to include the state name in each plot. (10
+    points)
+
+-   Hints:
+
+    -   you can use 2 separate loops for the 2 graphs.
+    -   first try to plot a few sates (say 4), to see whether your code
+        works. To see the figure with all 25 states, knit the file. You
+        will not be able to preview the figure with 25 plots in the
+        console, as you will most probably get the error
+        `"Error in plot.new() : figure margins too large"` - which means
+        that the plot panel in RStudio is too small for the margins of
+        the plot. You should see the plot in the knitted file. Do not
+        hesitate to reach out if you have any questions here.
+
+## Answer 5
+
+**Plot with the first 25 states**
+
+```{r, fig.width = 10, fig.height = 10, out.width = "100%"}
+# Make your plot in this R chunk, notice that this chunk includes some graph formatting
+par(mfrow = c(5, 5))
+for (i in states[1:25]) {
+  
+  twenty_days =  intresults08[intresults08$DaysToElection <= 20 & intresults08$statename== i ,]
+lm_twenty_days = lm(obama.intmarg ~ DaysToElection, data=twenty_days)
+plot(twenty_days$DaysToElection,twenty_days$obama.intmarg, xlim = c(25,0), ylim=c(-100,100), pch=16, col = adjustcolor("steelblue2", alpha = 0.7), xlab="Days To Election", ylab="Market's margin for Obama-",main = paste("State: ", i))
+abline(lm_twenty_days, col= "orangered")
+  
+}
+```
+
+**Figure with the remaining 26 plots**
+
+```{r, fig.width = 10, fig.height = 10, out.width = "100%"}
+# Make your plot in this R chunk, notice that this chunk includes some graph formatting
+par(mfrow = c(6, 5))
+for (i in states[25:51]) {
+  
+  twenty_days =  intresults08[intresults08$DaysToElection <= 20 & intresults08$statename== i ,]
+lm_twenty_days = lm(obama.intmarg ~ DaysToElection, data=twenty_days)
+plot(twenty_days$DaysToElection,twenty_days$obama.intmarg, xlim = c(25,0), ylim=c(-100,100), pch=16, col = adjustcolor("steelblue2", alpha = 0.7), xlab="Days To Election", ylab="Market's margin for Obama-",main = paste("State: ", i))
+abline(lm_twenty_days, col= "orangered")
+  
+}
+```
+
+## Question 6 (35 points)
+
+In this question you are asked to predict the winner of the presidential
+election in USA for 2008 ***one week before the election*** using the
+*Intrade* data, where days to election is the predictor and the betting
+market margin is the outcome variable.
+
+Use the *two weeks before* that moment (of one week prior to the
+election) to fit linear models for every state and make a prediction of
+the winner by state. You will need to use a loop to accomplish that.
+
+Once you know who is the predicted winner in each state, you can
+calculate who is the predicted winner for the presidential election.
+Keep in mind that the winner of a given state receives all electoral
+college votes for this state (see variable `EV`). The presidential
+candidate who wins 270 out of 538 of the electoral college votes wins
+the presidential elections.
+
+**To accomplish this task follow the steps below:**
+
+-   start by creating an empty container called `obama.predmarg`, where
+    you will save your prediction about Obama's margin of victory in a
+    given state. You will have such prediction for every state. Label
+    the observations in the container with the state names. (5 points)
+
+-   Loop over each state:
+
+    -   Inside the loop make a subset of the data by selecting only
+        observations with daily trading information done between 21 and
+        7 days before the election date for *one state*. (5 points)
+
+    -   Using this subset run a linear regression model of Obama's
+        betting margin on days to election (5 points)
+
+    -   Use the model output to predict what will happen (who will be
+        the winner) in this particular state **on election day**. In
+        other words, use the model output for a given state to predict
+        Obama's market margin of victory for the day of the election,
+        hence when `DaysToElection` is equal to 0. Save these
+        predictions in the empty container `obama.predmarg`. (Hint, you
+        can use the `predict()` function.) (10 points)
+
+        -   Note: After the loop is done running, your container
+            `obama.predmarg` will be filled with the predicted margin of
+            victory for Obama for each state. If the predicted Obama
+            margin is bigger than 0 for the election day, this means
+            your model predicts that Obama will win. If it is below 0,
+            this means that your model predicts that Obama will lose.
+
+(Hint: be careful when you run the `predict()` function inside the loop.
+The `newdata` argument should contain your explanatory variables used in
+the model you pass to `predict()`. The `DaysToElection` variable is a
+`difftime` variable (you can see this by running
+`class(object_name$DaysToElection))`: recall that you created
+`DaysToElection` by subtracting the date of the betting session from the
+election date, where both dates were saves in *date format* using the
+function `as.Date()`. So, any value for `DaysToElection` in the
+`newdata` argument should also be of `difftime` class (difference in
+time). The easiest way to do so is to find the difference in time in
+your dataset (in your case 0 days difference), save this value in an
+object outside the loop, and then set the `DaysToElection` variable
+inside the `predict()` function to be equal to this object.
+Alternatively, you can create a difference in time equal to 0 by
+substracting the same date (in *date format*) from itself.
+
+-   Compare the prediction saved in `obama.predmarg` with the actual
+    electoral results (`obama.actmarg`) using a plot. (Bonus 3 points)
+-   Make a contingency table summarizing the relationship between
+    predicted and actual win of Obama across states. In particular, the
+    table should show all 4 possible classifications: true positive
+    (number of states for which Obama is predicted to win and actually
+    won), false positive (number of states for which Obama is predicted
+    to win, but lost in reality), true negative (number of states for
+    which Obama is predicted to lose and actually lost), and false
+    negative (number states for which Obama was predicted to lose, but
+    in reality won). (See the example in the answers file). Recall that
+    margin of victory (in `obama.actmarg` and `obama.predmarg`) bigger
+    than 0 indicates that Obama wins/is predicted to win. (Bonus 4
+    points)
+-   How well does the betting market model do predicting the election
+    outcome? Calculate the number of electoral votes Obama was predicted
+    to win. Compare these to the number of electoral votes Obama won in
+    the 2008 presidential elections. (Hint: for this you need to
+    consider the variable `EV`, which indicates the number of electoral
+    college votes to be won for a given state. The candidate with most
+    popular support wins all electoral college votes in a given state.
+    (Bonus 3 points)
+
+------------------------------------------------------------------------
+
+## Answer 6
+
+**For your information: empty container for the predicted margin of
+victory for Obama for each state**
+
+```{r}
+
+obama.predmarg = rep(NA, length(states))
+names(obama.predmarg) = states
+obama.predmarg
+```
+
+**Container filled with the linear model predictions for Obama's market
+margin of victory for the election day**
+
+```{r}
+ dte_0 = as.difftime (0, units = "days")
+for (i in states) {
+  subset_trading_info = intresults08[intresults08$DaysToElection <= 21 & intresults08$DaysToElection >= 7 &intresults08$statename == i,]
+  lm_subset_trading_info = lm(obama.intmarg ~ DaysToElection, data = subset_trading_info)
+  predicted_margin = predict(lm_subset_trading_info, newdata = data.frame(DaysToElection =dte_0))
+
+ 
+  
+  obama.predmarg[i] = round(predicted_margin, 5)
+}
+ 
+```
+
+```{r}
+obama_betteractmarg = tapply(intresults08$Obama - intresults08$McCain, intresults08$state, mean, na.rm = T)
+
+
+
+plot(obama.predmarg, obama_betteractmarg, col = "blue", pch = 19,
+     xlab = "Predicted Margin Obama", ylab = "Actual Margin Obama", xlim=c(-100,100))
+abline(v=0, h=0, lty=2 )
+```
+
+**Contingency Table**
+
+```{r}
+pred_win = obama.predmarg >=0
+actual_win = obama_betteractmarg >=0
+table (pred_win, actual_win)
+```
+
+[Insert your answer here:]{style="color: green;"} Not a lot of false
+positives! The predictions are generally true, whether Obama loses or
+not the market is quite successful in determining it.
+
+**Who is predicted to win: Obama or McCain?** **Number of electoral
+votes predicted to be won by Obama**
+
+```{r}
+
+
+pres08$predicted = ifelse(obama.predmarg > 0, 1, 0)
+pres08$actual = ifelse(pres08$Obama - pres08$McCain >0,1,0)
+
+sum(pres08$EV[pres08$predicted == 1])
+
+```
+
+**Number of electoral votes actually won by Obama**
+
+```{r}
+sum(pres08$EV[pres08$actual == 1])
+```
+
+[Insert your answer here:]{style="color: green;"} Of course, the model
+is not perfect. Even though the market is quite successful in
+determining the winner (the bigger picture), this does not mean that it
+would determine electoral votes accurately. Perhaps the difference
+between the predicted and actual EV is due to the false positive that we
+could also notice on the table above.
+
+## Evaluation
+
+-   5 questions for a total of 100 points
+-   2 bonus question for 30 points (See question 5 and parts of question
+    6)  
+
+## Code Usage examples
+
+### `merge` function
+
+```{=tex}
+\bigskip
+\hrule 
+\bigskip
+```
+\|:----- *Example for merge usage, you can skip this part if you know
+how to use the merge function*\|:------\|
+
+```         
+- Let us illustrate the `merge function` using a simple hypothetical example
+  - in this hypothetical example we will create two datasets 
+    - the first dataset has 4 individuals with a unique ID number and Name
+    - the second dataset has 4 individuals with a unique ID number and age
+    - identical id numbers in both dataset refer to the same individual
+  - we would like to combine both datasets. Note that the datasets do not contain the entirley the same people. The individual with ID equal to 1 is listed only in data1 and the individual with ID equal to 5 is listed only in data2. Only the individuals with ID numbers equal to 2,3 and 4 are listed in both datasets. 
+  - we can combine the two datasets using the function merge and the unique ID variable
+  - consider the below code
+```
+
+```{r}
+
+
+data1 <- data.frame(ID = c(1, 2, 3, 4),
+                  Name = c("Alice", "Bob", "Charlie", "David"))
+
+data2 <- data.frame(ID.variable = c(2, 3, 4, 5),
+                  Age = c(25, 30, 35, 22))
+
+combined_data <- merge(x = data1, y = data2, by.x = "ID", by.y = "ID.variable", all.x = TRUE)
+combined_data
+
+```
+
+```         
+  - the first argument in `merge` is x; pass to it the first dataset
+  - the second argument in `merge` is y; pass to it the second dataset
+  - by.x specified the variable in the first dataset (the data you passed to argument x) on which you would like to merge the datasets, here it is "ID"
+  - by.y specified the merging variable in the second dataset (the data you passed to argument y). Here it is "ID.variable"
+  - all.x = TRUE, states that you want to keep all observations form the first dataset (the x dataset) (even if you did not have a match for them with the second dataset)
+  
+```
+
+\|:------------------------------- End of merge
+example\|:---------------------------------------------------\|
+
+### `as.Date()` function
+
+\|:----- *Example `as.Date()` function, you can skip this part if you
+know how to use this function*\|:------\|
+
+```         
+- The first argument in the `as.Date()` function is called `x`,
+    here you need to pass an object with the dates to be converted.
+- The second argument `format`, describes the date format in your
+    object with dates. In our case the dates come in the format
+    `2008-02-28` or `YYYY-MM-DD`. To communicate this to R you need
+    to set the argument `format = "%Y-%m-%d"`. 
+- If the format was `28.02.2008` or `DD.MM.YYYY` then you would set
+    `format = "%d.%m.%Y"`. If the format was `28/02/08` or
+    `DD/MM/YY` then you would set `format = "%d/%m/%y"`. 
+- Notice that when the year has 4 digits (e.g. YYYY or 2008) then %Y is
+    written with a capital letter. When the year is denoted by 2
+    digits (e.g. YY or 08), then we need to use lower case %y
+    instead).
+    
+```
+
+```{r, echo = T}
+# Example
+date <- "28.02.2008" # date but saveds as a string\
+data_transformed <- as.Date(x = date, format = "%d.%m.%Y")
+class(data_transformed)
+# The difference between two dates has a `difftime` format.
+difference_between_two_dates <- data_transformed - data_transformed
+difference_between_two_dates
+class(difference_between_two_dates)
+```
+
+\|:------------------------------- End of `as.Date`
+example\|:---------------------------------------------------\|
