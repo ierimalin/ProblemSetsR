@@ -1,0 +1,194 @@
+---
+title: "Data Report 1"
+author: "Alin Ierima"
+output:
+  pdf_document: default
+  html: default
+---
+
+# Dataset Description
+
+According to the documentation, `Palmerpenguins` is a database that includes information different characteristics of adult penguins near the Palmer Station, Antarctica. We will take a look at the `penguins` dataset, which includes the following variables: species, the island, bill length and depth (mm), flipper length (mm), body mass (gr), sex and year.
+
+```{r installing/library}
+#| eval: false
+#| include: false
+install.packages("palmerpenguins") 
+library("palmerpenguins")
+```
+
+# Cleaning
+
+As discussed in class, the data is already considered clean.
+
+# Exploration
+
+The species of the penguins seem to have a great importance for their length. As it can be seen in figure 1, **Adelie penguins are overall the smallest** in terms of size, **followed by Chinstrap** (bigger bills and slightly bigger flippers than the previous) **and, lastly, Gentoo** (bigger in both variables).
+
+```{r Figure 1, warning=FALSE, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+ggplot(data = penguins, 
+       mapping = aes( 
+         penguins$bill_length_mm, #I know it is a little iterative but you cannot go wrong with $'s
+         penguins$flipper_length_mm,
+         color = species)) + geom_point() + labs(
+           x = "The Bill Length of Penguins (milimeters)",
+           y = "The Flipper Length of Penguins (milimeters)", 
+           #title = "Size Differences Amongst Different Species", this makes the plot look ugly
+         ) + theme(legend.background = element_rect(fill="gray70"))
+ 
+
+
+```
+
+Does the island penguins come from influence their size? **Penguins from Biscoe seem to be bigger than the rest,** and they mostly overlap with the Gentoo species as shown in the previous figure. The reason is a matter of speculation, as there might be a reason why this species thrive on the island.
+
+```{r Figure 2, warning=FALSE, echo=FALSE, message=FALSE}
+ggplot(data = penguins, 
+       mapping = aes( 
+         penguins$bill_length_mm,
+         penguins$flipper_length_mm,
+         color = island)) + geom_point() + labs(
+           x = "The Bill Length of Penguins (milimeters)",
+           y = "The Flipper Length of Penguins (milimeters)", 
+         ) + theme(legend.background = element_rect(fill="gray70"))
+ 
+```
+
+Let's further delve into the composition of each island. Adelie penguins, which are the smallest, seem to be endemic to all three islands, whereas **Chinstrap and Gentoo remain geographically confined** to only one separate island. **Togersten is** **only populated** **by Adelie species**.
+
+```{r Figure 3, warning=FALSE, echo=FALSE, message=FALSE}
+ggplot(penguins, aes(x = island, fill = species)) +
+  geom_bar(position = position_stack(), stat = "count") +
+  labs(
+    x = "Island",
+    y = "Count",
+    title = "Penguins of Each Species by Island"
+  ) +
+  theme_minimal()
+```
+
+Intuitively enough, Gentoo penguins are not only the largest but also the heaviest. However, Adelie and Chinstrap penguins seem to be quite similar in their heaviness, median-wise.
+
+```{r Figure 4, warning=FALSE, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+ggplot(penguins, aes(species, body_mass_g, fill = species)) + geom_boxplot() +
+  labs(
+      x = "Species",
+    y = "The body mass of Penguins (grams)"
+  ) + theme(legend.position = "none")
+ 
+```
+
+At the same time, **sex** does seem to make a difference when it comes to length. Scatterplotting seems not to help a great deal in this case, but out of this figure we can take out that when it comes to flipper length, the outliers (those with more than 225mm) **are exclusively male**.
+
+```{r Figure 5, warning=FALSE, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+ggplot(data = penguins, 
+       mapping = aes( 
+         penguins$bill_length_mm, 
+         penguins$flipper_length_mm,
+         color = sex)) + geom_point() + labs(
+           x = "The Bill Length of Penguins (milimeters)",
+           y = "The Flipper Length of Penguins (milimeters)", 
+         ) + theme(legend.background = element_rect(fill="gray70"))
+ 
+```
+
+The following two boxplots clear the picture when it comes to sex and penguin dimensions. **Males are, on average, bigger than females** and also represent the maximum recorded values. NA's of sex are added for representation and transparency purposes, even though their number is quite small (11 compared to 333).
+
+```{r counting NAs, warning=FALSE, echo=FALSE, message=FALSE, results = "hide"}
+
+sum(is.na(penguins$sex)) # so there are eleven NA s 
+sum(!is.na(penguins$sex)) #... and 333 complete entries
+```
+
+```{r Figure 6, warning=FALSE, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+ggplot(data = penguins, 
+       mapping = aes( 
+         penguins$sex,
+         penguins$flipper_length_mm,
+         fill = sex)) + geom_boxplot() + labs(
+           x = "Sex of Penguins",
+           y = "The Flipper Length of Penguins (milimeters)", 
+         ) + theme(legend.background = element_rect(fill="gray70"))
+ 
+```
+
+```{r Figure 7, warning=FALSE, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+ggplot(data = penguins, 
+       mapping = aes( 
+         penguins$sex,
+         penguins$bill_length_mm,
+         fill = sex)) + geom_boxplot() + labs(
+           x = "Sex of Penguins",
+           y = "The Bill Length of Penguins (milimeters)", 
+         ) + theme(legend.background = element_rect(fill="gray70"))
+ 
+```
+
+When it comes to body mass, **male penguins are also heavier** and, as shown in the two figures below, they represent the biggest penguins from the dataset.
+
+```{r Figure 8, warning=FALSE, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+ggplot(data = penguins, 
+       mapping = aes( 
+         penguins$body_mass_g, 
+        fill=sex)) + geom_histogram(binwidth = 80, alpha = 0.8) + labs(
+           x = "Body Mass (grams)",
+           y = "Frequency", 
+         ) + theme(legend.background = element_rect(fill="gray70"))
+```
+
+```{r Figure 9, warning=FALSE, echo=FALSE, message=FALSE}
+ggplot(penguins, aes(sex, body_mass_g, fill = sex)) + geom_boxplot() +
+  labs(
+    x = "Sex",
+    y = "The body mass of Penguins (grams)"
+  ) + theme(legend.position = "none")
+```
+
+# Conclusion (15 points)
+
+To summarize the findings, the following factors seem to affect the mass and sizes of penguins:
+
+-   Species: Gentoos are the biggest and heaviest, followed by Chinstrap and Adelie
+
+-   Island, as the largest penguins live on Biscoe island; however, Adelie penguins live on all three islands. It is unclear whether only Biscoe offers the needed conditions for bigger penguins to live there
+
+-   Sex: male penguins are bigger and heavier than female penguins
+
+# Code exercises
+
+Use the `msleep` data (included with `ggplot2`) for both exercises.
+
+**Exercise:** Get all the animals who are heavier than the average bodyweight in the data; keep only the `name` and `bodywt` columns; and order the rows by `bodywt` in a descending order.
+
+```{r Exercise 1}
+
+avg_weight <- mean(msleep$bodywt, na.rm = T) #calculating the mean
+
+msleep |> filter(bodywt > avg_weight) |> 
+  select(name, bodywt) |> 
+  arrange(desc(bodywt)) #filter by big animals, select only two columns, arrange desc by bodywt
+
+```
+
+**Exercise 5:** Start fresh (not with the data from exercise 4). Create a new column called `brainwt_ratio` showing the ratio of of brain mass to the total body weight. Round the ratio to 4 digits. Keep the `name` and `brainwt_ratio` colums and keep the 10 animals with the highest ratio.
+
+```{r}
+msleep |> 
+  mutate(brainwt_ratio = round (msleep$brainwt / msleep$bodywt, 4)) |> 
+  select(name, brainwt_ratio) |>
+  arrange(desc(brainwt_ratio)) |>
+  head(10) #only the first 10
+
+```
