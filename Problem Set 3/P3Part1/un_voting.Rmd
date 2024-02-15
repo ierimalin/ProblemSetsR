@@ -1,0 +1,522 @@
+---
+title: "Problem Set 3 - Part 1"
+author: "Alin Ierima"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Voting in the United Nations General Assembly
+
+Like legislators in the US Congress, the member states of the United
+Nations (UN) are politically divided on many issues such as trade,
+nuclear disarmament, and human rights. During the Cold War, countries in
+the UN General Assembly tended to split into two factions: one led by
+the capitalist United States and the other by the communist Soviet
+Union. In this exercise, we will analyze how states' ideological
+positions, as captured by their votes on UN resolutions, have changed
+since the fall of communism.
+
+This exercise is based on Michael A. Bailey, Anton Strezhnev, and Erik
+Voeten. "Estimating Dynamic State Preferences from United Nations Voting
+Data." *Journal of Conflict Resolution*, August 2015.
+
+The data is called `unvoting_adj.csv` and the variables are:
+
+| Name                 | Description                                                                       |
+|:---------------------|:-------------------------------------------------|
+| `CountryName`        | The name of the country                                                           |
+| `idealpoint`         | Its estimated ideal point                                                         |
+| `Year`               | The year for which the ideal point is estimated                                   |
+| `PctAgreeUS`         | The percentage of votes that agree with the US on the same issue                  |
+| `PctAgreeRUSSIA`     | The percentage of votes that agree with Russia/the Soviet Union on the same issue |
+| `distanceToRussia`\* | Distance from Moscow to the capital of a given country in kilometers              |
+
+The `distanceToRussia` variable was added to the original data set only
+for the purposes of this problem set. The source for this variable is:
+<https://www.distance-between-countries.com/countries/distance_between_countries.php?from=Russia&language=English&dist_order=1>.
+
+In the analysis that follows, we measure state preferences in two ways.
+Note that the data for 1964 are missing due to the absence of roll call
+data.
+
+First, we can use the percentage of votes by each country that coincide
+with votes on the same issue cast by the two major Cold War powers: the
+United States and the Soviet Union. For example, if a country voted for
+ten resolutions in 1992, and if its vote matched the United States's
+vote on exactly six of these resolutions, the variable `PctAgreeUS` in
+1992 would equal 60 for this country.
+
+Second, we can also measure state preferences in terms of numerical
+ideal points.\
+These ideal points capture what international relations scholars have
+called countries' *liberalism* on issues such as *political freedom,
+democratization, and financial liberalization*. The two measures are
+highly correlated, with larger (more liberal) ideal points corresponding
+to a higher percentage of votes that agree with the US.
+
+## Question 1 (15 points)
+
+We begin by examining how the distribution of state ideal points
+(liberalism) has changed since the end of communism.
+
+-   Plot the distribution of ideal points separately for 1980 (about 10
+    years before the fall of the Berlin Wall) and 2000 (about ten years
+    after the fall of the Berlin Wall). Make two separate plots. (5
+    points)
+-   Add the median to each plot as a vertical red line. (2 points)
+
+Answer the following questions in the text (8 points):
+
+-   How do the two distributions differ?
+-   Do you see any changes in the distribution after the fall of the
+    Berlin Wall?
+-   What changes do you see? Pay attention to the degree of polarization
+    and give a brief substantive interpretation of the results.
+-   Use the `quantile` function to quantify (support with numbers) the
+    patterns you identified.
+
+## Answer 1
+
+```{r}
+un <- read.csv("data/unvoting_adj.csv")
+head(un)
+
+```
+
+```{r}
+points_1980 = un[un$Year == 1980,]
+hist(points_1980$idealpoint, main = "Ideal points for 1980", xlab = "Ideal points", xlim = c(-3,3))
+abline(v = median(points_1980$idealpoint), col="red")
+
+```
+
+```{r}
+points_2000 = un[un$Year == 2000,]
+hist(points_2000$idealpoint, main = "Ideal points for 2000", xlab = "Ideal points", xlim = c(-3,3))
+abline(v = median(points_2000$idealpoint), col="red")
+```
+
+**Quantiles of ideal points in 1980**
+
+```{r}
+quantile(points_1980$idealpoint)
+```
+
+**Quantiles of ideal points in 2000**
+
+```{r}
+quantile(points_2000$idealpoint)
+```
+
+[Insert your answer here:]{style="color: green;"} According to the data,
+it seems that the median point slightly shifted towards lower ideal
+points. In fact, Additionally, the UN member state's ideal points became
+less liberal after the fall of communism, which might seem
+counterintuitive, but is actually to be expected because many of the
+newly-founded states found themselves to remain in a hybrid, neither
+autocratic nor democratic state. There is also less polarization, which
+less extreme cases and more concentration around -1 -- +1.5, as observed
+in the 2000's histogram. This can be interpreted as more consensus
+within the UN states as the world moves to a post-bipolar order.
+
+## Question 2 (20 points)
+
+Next, examine how the number of countries voting with the US has changed
+over time.
+
+-   Plot the average percent agreement with US across all counties over
+    time (meaning the average percent agreement with US by year). Use
+    color `steelblue2` (5 points)
+-   For comparison, add the average percent agreement with Russia across
+    all countries over time. Use color `orangered` (5 points)
+
+Answer the following questions in the text:
+
+-   Does the US appear to be getting more or less isolated over time, as
+    compared to Russia? (2 points)
+-   What are the countries that are consistently pro-US? List the top 5
+    countries. Hint*: you can calculate the mean agreement with US* per
+    country\*. Here the `sort()` function might be helpful.
+    `sort(x,decreasing = TRUE)` will sort the values in the x vector in
+    a decreasing order, starting from highest to lowest. (3 points)
+-   What are the most pro-Russian countries? List the top 5. Hint\*: see
+    hint above (3 points)\
+-   Give a brief substantive interpretation of the results. (2 points)
+
+## Answer 2
+
+**Top 5 pro-US countries (excluding US) and their mean agreement with
+USavg_agreement_by_year**
+
+```{r}
+countries_noUS = un[un$CountryAbb != "USA",]
+countries_noRUS = un[un$CountryAbb != "RUS",]
+avg_agreement_by_year_US = tapply(un$PctAgreeUS, un$Year, mean)
+avg_agreement_by_year_RUS = tapply(un$PctAgreeRUSSIA, un$Year, mean)
+  
+plot(names(avg_agreement_by_year_US), avg_agreement_by_year_US, type= "l", col="steelblue2", ylim = c(0,1),ylab="Average percent agreement", xlab="Year")
+lines(names(avg_agreement_by_year_RUS), avg_agreement_by_year_RUS, col="orangered")
+
+legend("topright", legend =c("USA", "Russia"), col = c("steelblue2", "orangered"), lty = 1)
+
+```
+
+```{r}
+head(sort(x = tapply(countries_noUS$PctAgreeUS, countries_noUS$CountryName, mean),decreasing = T),5)
+```
+
+**Top 5 pro-Russian countries (excluding Russia) and their mean
+agreement with Russia**
+
+```{r}
+head(sort(x = tapply(countries_noRUS$PctAgreeRUSSIA, countries_noRUS$CountryName, mean),decreasing = T),5)
+
+```
+
+[Insert your answer here:]{style="color: green;"} If we are to take the
+results at face value, it would appear that USA is becoming increasingly
+isolated over time. Even the five countries that agree the most to USA
+(Palau, Israel, UK, Taiwan, Micronesia) are on average much much less
+likely to have the exact same opinion in the UN as the top 5 of Russia's
+(GDR, Czechoslovakia, Ukraine, Poland, Belarus). In my opinion, the
+extremely big support coming from Russia's allies might be because they
+were feeling constrained or threatened to support Russia in order to
+avoid repercussions, something that does not exist to the same extent
+for the US allies. Additionally, regarding the wider implications of the
+graph, it might be that it either reflects threat or simply the
+agreement coming from autocratic/hybrid regimes, which happen to
+multiply after the end of the Cold War.
+
+## Question 3 (20 points)
+
+One problem of using the percentage of votes that agree with the US or
+Russia as a measure of state preferences is that the ideological
+positions, and consequently the voting patterns, of the two countries
+might have themselves changed over time. This makes it difficult to know
+which countries' ideological positions have changed - those of Russia/US
+or of the other countries.
+
+-   Investigate this issue by plotting the evolution of the two
+    countries' *ideal points* over time. Use `steelblue2` for US and
+    `orangered` for Russia. (10 points)
+-   Add the yearly *median* ideal point of all countries (including US
+    and Russia). (6 points)
+-   How might the results of this analysis modify (or not) your
+    interpretation of the previous analysis in question 2? What is the
+    reason for Russia becoming more popular - because more countries
+    increasingly agree with Russia, or because Russia has moved closer
+    to the median after the fall of the Berlin Wall? (4 points)
+
+## Answer 3
+
+```{r}
+data_us = un[un$CountryAbb == "USA",]
+data_rus = un[un$CountryAbb == "RUS",]
+
+plot(data_rus$Year, data_rus$idealpoint, type="l", col="orangered",ylim = c(-3, 3), xlab="Year", ylab="Ideal point")
+lines(data_us$Year, data_us$idealpoint, type="l", col="steelblue2")
+lines(names(tapply(un$idealpoint, un$Year, median)), tapply(un$idealpoint, un$Year, median))
+text(1950.5, -2, "Russia", col="orangered")
+text(1950.5, 0.5, "Median of \n all countries")
+text(1950.5, 2.5, "USA", col="steelblue2")
+
+```
+
+[Insert your answer here:]{style="color: green;"} The results are really
+surprising, as I did not take into account how Russia might have gotten
+closer to the median of the countries, this being the reason why they
+tend to agree with Russia more in the decisions in the UN. At the same
+time, we can see a slow descent of countries' ideal points which
+plateaued somewhere around the fall of the Eastern bloc.
+
+## Question 4 (25 points)
+
+Let's examine how countries that were formerly part of the Soviet Union
+differ in terms of their ideology and UN voting compared to countries
+that were not part of the Soviet Union. The former Soviet Union
+countries are: Estonia, Latvia, Lithuania, Belarus, Moldova, Ukraine,
+Armenia, Azerbaijan, Georgia, Kazakhstan, Kyrgyzstan, Turkmenistan,
+Tajikistan, Uzbekistan, and Russia.
+
+-   Create a binary variable called `post.soviet`, which takes the value
+    1 if a country was part of the former Soviet Union and 0 otherwise.
+    Hint\*: The `%in%` operator, which is used as `x %in% y`, may be
+    helpful This operator returns a logical vector whose element is
+    `TRUE` (`FALSE`) if the corresponding element of vector `x` is equal
+    (not equal) to a value contained in vector `y`. (6 points)
+    -   For example let's say you have a vector with food products in
+        Spar and food items you want to buy. You can check which items
+        in Spar you want to buy using the `%in%` operator the following
+        way.
+
+```{r, eval = T}
+
+## create objects with food items
+Spar <- c("bread","pasta", "salt", "butter", "beer", "coca-cola","tomatoes", "pizza", "milk", "ham")
+shopping_list <- c("coca-cola", "pizza", "butter", "chewing gum")
+
+## check which items in Spar are contained in the shopping list
+in_shopping_list <- Spar %in% shopping_list # for each item in the Spar object, R asks is this item in the shopping list or not and returns TRUE or FALSE. 
+in_shopping_list
+## show the comparison along with the Sparlist
+cbind(Spar, in_shopping_list)
+
+```
+
+-   Lets say you want to create a binary variable which denotes whether
+    you want to buy a product from Spar or not. You can do this the
+    following way:
+
+```{r}
+## create a binary variable, which is equal to 1 if a food item from the supermarket is contained in the shopping list, 0 if not
+want_to_buy <- ifelse(Spar %in% shopping_list, 1, 0)
+want_to_buy
+
+## show the binary variable along with the supermarket list
+cbind(Spar, want_to_buy)
+```
+
+-   Focus on the most recently available UN data from 2012 (3 points)
+-   Then, plot each Post-Soviet Union state's ideal point (x-axis)
+    against the percentage of its votes that agree with the United
+    States (y-axis). (3 points) Whereby you
+    -   color Post-Soviet Union states in `orangered`, transparency
+        level 0.5. Hint: you can adjust the transparency level of colors
+        by passing the color to the `adjustcolor()` function. For
+        example, `adjustcolor(col = "green", alpha.f = 0.5)` will give
+        you a green color which is roughly speaking half transparent.\
+    -   and insert a label "Post-Soviet States" in the same color.
+-   Add to the same plot also the other countries (non Post-Soviet Union
+    countries) and color these in `steelblue2`, with transparency level
+    0.3. Insert a label "Other Countries". (3 points)
+-   Compare the post Soviet Union states against the other countries in
+    the text. Briefly comment on what you observe. Which of the post
+    Soviet countries are non-liberal and which are highly liberal?
+    Mention a few. Hint\*: countries with larger values of the ideal
+    positions are more liberal. It might be useful to use the
+    `quantile()` function to find the most extreme non-liberal countries
+    (the countries in the first few percentiles) and the most extreme
+    liberal countries (the countries in the last few percentiles). (10
+    points)
+
+## Answer 4
+
+**For your information: percentage of post-soviet Union countries**
+
+```{r}
+soviet_states = c("Estonia", "Latvia", "Lithuania", "Belarus", "Moldova", "Ukraine", "Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Turkmenistan", "Tajikistan", "Uzbekistan", "Russia")
+
+un$post_soviet = as.numeric(un$CountryName %in% soviet_states)
+mean(un$post_soviet)
+
+
+
+
+```
+
+**Plot**
+
+```{r}
+
+points_2012 = un[un$Year == 2012 & un$post_soviet == 1,]
+points_2012_other = un[un$Year == 2012 & un$post_soviet == 0,]
+plot(points_2012$idealpoint, points_2012$PctAgreeUS,ylim = c(0, 1), xlim= c(-3,3), xlab="Year", ylab="Ideal point", col=adjustcolor(col = "orangered", alpha.f = 0.5),pch=20,cex=2)
+text(1,0.2, "Post-Soviet States", col="orangered")
+points(points_2012_other$idealpoint, points_2012_other$PctAgreeUS,col =adjustcolor(col = "steelblue2", alpha.f = 0.5), pch = 20, cex = 1.3)
+text(0.8,0.6,"Other Countries", col="steelblue2")
+```
+
+**10th percentile of the variable `idealpoint`**
+
+```{r}
+subset_2012 = un[un$Year == 2012,]
+non_liberal = quantile(subset_2012$idealpoint, probs = 0.1, na.rm=T)
+non_liberal
+```
+
+**Countries with ideal positions in the first 10th percentile
+(non-liberal)**
+
+```{r}
+unique(subset_2012$CountryName[subset_2012$idealpoint <= non_liberal])
+```
+
+**90th percentile of the variable `idealpoint`**
+
+```{r}
+very_liberal = quantile(subset_2012$idealpoint, probs = 0.9)
+very_liberal
+```
+
+**Countries with ideal positions above the 90th percentile (most liberal
+countries)**
+
+```{r}
+head(unique(subset_2012$CountryName[subset_2012$idealpoint >= very_liberal]),20)
+
+```
+
+[Insert your answer here:]{style="color: green;"} Now that we looked at
+the post-soviet states it does not seem like there is a big trend or
+difference between those countries and the other UN members.There are,
+of course, countries which are more liberal, such as Lithuania, Estonia,
+Latvia, and others that are less liberal, such as Russia, Belarus,
+Turkmenistan.
+
+## Question 5 (20 points)
+
+We have just seen that while some post-Soviet countries have retained
+non-liberal ideologies, other post-Soviet countries were much more
+liberal in 2012.
+
+Let's examine how the **median ideal points** of Soviet/post-Soviet
+countries and all other countries has varied over all the years in the
+data.
+
+-   Plot these median ideal points by year. (12 points)
+-   Indicate 1989, the year of the fall of the Berlin Wall, on the graph
+    using a dashed vertical line. (3 points)\
+-   Briefly comment on what you observe in the text. (5 points)
+
+## Answer 5
+
+```{r}
+median_idealpoints= tapply(un$idealpoint, un$Year, median,na.rm= T)
+justsoviet = un[un$post_soviet == 1,]
+median_idealpoints_soviet = tapply(justsoviet$idealpoint, justsoviet$Year, median, na.rm= T)
+plot(names(median_idealpoints), median_idealpoints, type ="l", ylim=c(-3,3), ylab= "Median Ideal Point", xlab= "Year", main="Median Ideal Points accross time")
+
+lines(names(median_idealpoints_soviet), median_idealpoints_soviet, col = "red4")
+abline(v=1989, lty=2, col="grey")
+text(2000,1, "Soviet States", col="red4")
+text(2009, -1, "Other states")
+
+
+```
+
+[Insert your answer here:]{style="color: green;"}
+
+## Bonus Question 6 (25 points)
+
+Imagine you work in the data science department of a think tank. Your
+boss is very happy with your previous graphs about voting patterns in
+the UN General Assembly. Upon looking at the graphs she thinks there
+might be another pattern in the data worthwhile exploring - voting in
+agreement with Russia and US might be driven not only by the ideology of
+countries, but also by their economic and political dependency from the
+two major Cold War powers. Looking into the data, you see that you do
+not have any variables which measure economic factors, but you have a
+variable, which captures the geographic closeness to Russia - the
+distance to Russia in kilometers. While not ideal, distance to Russia
+might be a rough proxy for the intensity of economic relations, as well
+as political influence of Russia. Explore whether political ideology and
+geographic closeness to Russia are related to the voting patterns in the
+UN by doing the following:
+
+-   First, check the correlation between these variables.
+-   Then, plot the average ideal points of countries against their
+    average percentage agreement with Russia. Include distance to Russia
+    as a size for the points - they should be proportional to the
+    distance of the country to Russia. Make the figure a bit more
+    informative by coloring post-soviet countries in red and the
+    remaining ones in blue, make the points transparent to see overlaps.
+    Then add country labels for several countries with high and low
+    agreement with Russia. In particular add labels for `Russia`,
+    `Belarus`, `Czechoslovakia`, `Hungary`, `Poland`, `Ukraine`,
+    `United States of America`, `Austria`, `German Democratic Republic`,
+    `Israel`.
+
+To achieve this you can follow the below steps. Note that there are many
+ways to make the same plot and the below steps are only possible one
+way.
+
+-   (for 5 points): To plot the average ideal points (`idealpoint`) of
+    countries against their average percentage agreement with Russia
+    (`PctAgreeRUSSIA`).
+    -   First, transform the variable `CountryName` to a factor
+        variable.\
+    -   Then you need to calculate the average values of these variables
+        by country and save these in separate objects. (Hopefully, this
+        reminds you about `tapply`). Combine these average values into
+        one object called `un_means`. (For this purpose you can use the
+        `cbind()` function, which combines vectors by columns).
+    -   You might want to add the distance to Russia information to the
+        `un_means` object. If you want to add a variable to your object,
+        you need to transform it to a data format. To transform an
+        object into a data format you can use the `as.data.frame()`
+        function. (e.g. `un_means2 <- as.data.frame(un_means)` will
+        transform `un_means` to a `data.frame` format and save it in a
+        new object called `un_means2`). Adding the distance to Russia
+        variable will be tricky - you need to create an object with
+        distance to Russia by country (hint you can use `tapply` here
+        too). Then you can use the `merge()` function to combine
+        `un_means` and your distance to Russia. Do not hesitate to ask
+        questions on Slack on this.
+-   Color post-soviet countries in `orangered`, color the remaining
+    countries in `steelblue2` using for both colors transparency level
+    0.3. Add an informative legend. (2 points)
+-   Indicate the following countries on the plot using the country name
+    abbreviation: `Russia`, `Belarus`, `Czechoslovakia`, `Hungary`,
+    `Poland`, `Ukraine`, `United States of America`, `Austria`,
+    `German Democratic Republic`, `Israel`. (5 points)
+-   The size of the points should be proportional to the distance of
+    this country to Russia (use the variable `distanceToRussia`) -
+    bigger distance - bigger points. Hint: You can not use the actual
+    distance to Russia as a size of your points, as this will make the
+    points enormous. The size of the points should range somewhere
+    between 0.2 until about 10 to be visible on the graph. Play around
+    to get an informative graph, the points do not have to be the exact
+    same size as in the example below. Be careful when you use distance
+    to Russia as a size for your points - make sure that the *order* of
+    countries in your ideology country means, agreement with Russia
+    country means and country distances to Russia variables is the same.
+    (10 points)
+-   Discuss your findings from the correlations and the graph in the
+    text. Do you see any indication that geographic distance is
+    important for voting in the UN General Assembly? (3 points)
+
+**For your information: average agreement with Russia by country - first
+few countries**
+
+```{r}
+avg_agreement = tapply(un$PctAgreeRUSSIA, un$CountryName, mean)
+head(avg_agreement,5)
+```
+
+**For your information: average ideal points by country - first few
+countries**
+
+```{r}
+avg_ideal = tapply(un$idealpoint, un$CountryName, mean)
+head(avg_ideal,5)
+```
+
+**For your information: first few observations in the dataset
+`un_means`**
+
+```{r}
+un_means = cbind(avg_agreement, avg_ideal)
+un_means_dataframe = as.data.frame(un_means)
+head(un_means,5)
+```
+
+**Correlation matrix for agreement with Russia, ideology and distance to
+Russia**
+
+```{r}
+un$CountryName = as.factor(un$CountryName)
+
+plot(un_means_dataframe$avg_ideal, un_means_dataframe$avg_agreement, col=adjustcolor(col="steelblue2",alpha.f = 0.3), xlab="Average ideal points", ylab="Average agreement with Russia")
+```
+
+[Insert your answer here:]{style="color: green;"}
+
+## Evaluation
+
+-   5 questions for a total of 100 points
+-   1 bonus question for 25 points

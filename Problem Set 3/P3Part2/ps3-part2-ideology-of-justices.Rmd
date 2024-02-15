@@ -1,0 +1,441 @@
+---
+title: "Problem set 3 - part 2"
+author: "Alin Ierima"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Ideology of US Supreme Court Justices
+
+We learned an important programming method called the *for loop*. In
+this part of the exam you will practice using loops with data on the
+ideological positions of United States Supreme Court Justices. Just like
+legislators, justices make voting decisions that we can use to estimate
+their ideological positions.
+
+This exercise is based in part on Andrew Martin and Kevin Quinn. (2002).
+'Dynamic Ideal Point Estimation via Markov Chain Monte Carlo for the
+U.S. Supreme Court, 1953-1999.' *Political Analysis*, 10:2, pp.134-154.
+
+The file `justices.csv` contains the following variables:
+
+| Name      | Description                                   |
+|:----------|:----------------------------------------------|
+| `term`    | Supreme Court term (a year)                   |
+| `justice` | Justice's name                                |
+| `idealpt` | Justice's estimated ideal point in that term  |
+| `pparty`  | Political party of the president in that term |
+| `pres`    | President's name                              |
+
+The ideal points of the justices are negative to indicate liberal
+preferences and positive to indicate conservative preferences.
+
+## Question 1 (10 points)
+
+We would like to know the *median* ideal point for the Court during each
+term included in the dataset.
+
+-   First, calculate the median ideal point (variable `idealpt`) for
+    each term (variable `term`) of the Court. (4 points)
+-   Next, generate a plot with `term` on the horizontal axis (x-axis)
+    and the median ideal points on the vertical axis (y-axis). (3
+    points)
+-   Connect all points with a line (You can find good examples how to do
+    so here: <https://r-coder.com/plot-r/#R_plot_type>) (1 point)
+-   Include a dashed horizontal line at zero to indicate a "neutral"
+    ideal point. (1 point)
+-   Be sure to include informative axis labels and a plot title. (1
+    point)
+
+## Answer 1
+
+```{r}
+justices <- read.csv("data/justices.csv", stringsAsFactors = FALSE)
+```
+
+```{r}
+median_idealpt=tapply(justices$idealpt, justices$term, median)
+justices$median_idealpt = median_idealpt[as.character(justices$term)]
+```
+
+```{r}
+plot(unique(justices$term), median_idealpt, xlab="Terms", ylab="Median ideal points", type = "o",pch = 7, ylim = c(-1.0, 1.3), main="The median ideal points of Justices across the years" )
+abline(h=0, lty=3, col="steelblue4")
+text(1991, -0.1, "Neutral ideal point")
+```
+
+## Question 2 (20 points)
+
+Next, we would like to identify the name of the justice with an ideal
+position equal to the median ideal point **for each term**. Use a for
+loop to do so!
+
+The loop should: (14 points)
+
+-   go though each term
+-   identify the justice whose ideal position is equal to the the median
+    position in this term
+-   save the names of the justices for each term in a container object
+    called `median_justice`.
+
+In addition, answer in the text the following questions. [Instead of
+copy-pasting numbers in your answer, please use 'r some code'. For
+example, if you want to refer to the mean value of the ideal positions
+of all justices, instead of writing, the mean ideal position is "
+-0.008321182", write the mean ideal position is
+`r mean(justices$idealpt)`, see how this looks in Rmarkdown.]
+
+1)  Which justice had the median ideal point in the most terms? (3
+    points)
+2)  How long did this justice serve on the Court overall? (2 points)
+3)  What was this justice's average ideal point over his/her entire
+    tenure on the Court? (1 points)
+
+## Answer 2
+
+**Median justices by term**
+
+```{r}
+tapply(justices$justice, justices$term, median)
+```
+
+**Number of times a given justice had a position equal to the median
+term position**
+
+```{r}
+median_justice = NA
+for (i in unique(justices$term)) {
+  justice_name= justices$justice[justices$term == i & justices$idealpt == median_idealpt[as.character(i) ]]
+  median_justice=c(median_justice, ifelse(length(justice_name) > 0,justice_name, NA) )
+}
+
+justice_counts = table(median_justice)
+justice_counts
+```
+
+**How long did this justice serve on the Court overall?**
+
+```{r}
+length(justices$term[justices$justice == "White"])
+```
+
+**What was this justice's average ideal point over his/her entire tenure
+on the Court?**
+
+```{r}
+mean(justices$idealpt[justices$justice== "White"])
+```
+
+[Insert your answer here:]{style="color: green;"} In this exercise we
+wanted to identify the justice with an ideal position equal to the
+median point, therefore we took White since he he has the biggest length
+of serving, `32`, and his average ideal point over the entire tenure was
+`0.4401563.`
+
+## Question 3 (30 points)
+
+We now turn to the relationship between Supreme Court ideology and the
+president. Specifically, we want to see how the ideology of the Supreme
+Court changes over the course of each president's time in office.
+
+-   Begin by creating two empty 'container' vectors: one to hold
+    Democratic presidents (name it `dem_pres_shift`), and another for
+    Republican presidents( (name it `rep_pres_shift`). Label each vector
+    with the presidents' names. (6 points)
+-   Next, using a loop, calculate for each Democratic president the
+    shift in Supreme Court ideology by subtracting the Court's median
+    ideal point in the president's first term from its median ideal
+    point in the president's last term. (10 points)
+-   Store these values in your Democratic container vector
+    (`dem_pres_shift`). (2 points)
+-   Repeat the same process for Republican presidents. (Hint: you can
+    create a second loop.) (12 points)
+
+## Answer 3
+
+**Empty container `dem_pres_shift`**
+
+```{r}
+dem_pres_shift = rep(NA,length(unique(justices$pres[justices$pparty =="D"])))
+names(dem_pres_shift) =unique(justices$pres[justices$pparty == "D"])
+dem_pres_shift
+```
+
+**Empty container `rep_pres_shift`**
+
+```{r}
+rep_pres_shift = rep(NA,length(unique(justices$pres[justices$pparty =="R"])))
+names(rep_pres_shift) = unique(justices$pres[justices$pparty == "R"])
+rep_pres_shift
+```
+
+**Ideological change in the Supreme Court during Democratic presidents**
+
+```{r}
+
+
+for (i in names(dem_pres_shift)) {
+  dem_pres_data = subset(justices, justices$pres == i &pparty == "D")
+  
+  first_term = min(dem_pres_data$term, na.rm=T)
+  last_term = max(dem_pres_data$term, na.rm=T)
+  
+   if (is.na(first_term) | is.na(last_term) ) {
+  shift=NULL   
+   } else{
+       median_first = median(dem_pres_data$idealpt[as.numeric(dem_pres_data$term) == first_term], na.rm=T)
+  median_last = median(dem_pres_data$idealpt[as.numeric(dem_pres_data$term) == last_term],na.rm=T)
+       shift = median_last - median_first
+   }              
+
+  dem_pres_shift[i] = shift
+}
+  dem_pres_shift
+
+```
+
+**Ideological change in the Supreme Court during Republican presidents**
+
+```{r}
+for (i in names(rep_pres_shift)) {
+  rep_pres_data = subset(justices, justices$pres == i &pparty == "R")
+  first_term = min(rep_pres_data$term, na.rm=T)
+  last_term = max(rep_pres_data$term, na.rm=T)
+   if (is.na(first_term) | is.na(last_term) ) {
+  shift=NULL   
+   } else{
+       median_first = median(rep_pres_data$idealpt[as.numeric(rep_pres_data$term) == first_term], na.rm=T)
+  median_last = median(rep_pres_data$idealpt[as.numeric(rep_pres_data$term) == last_term],na.rm=T)
+     
+   }              
+
+  shift = median_last - median_first
+  rep_pres_shift[i] = shift
+}
+  rep_pres_shift
+```
+
+## Question 4 (10 points)
+
+-   What was the mean and standard deviation of the Supreme Court
+    ideology shifts you just calculated when looking only at the
+    Democratic presidencies?
+-   What about the Republican presidencies?
+-   Which Republican president's tenure had the largest conservative
+    (positive) shift on the Court?
+-   Which Democratic president's tenure had the largest liberal
+    (negative) shift?
+
+## Answer 4
+
+**Mean and standard deviation of the Supreme Court ideology shifts
+(Democratic presidencies)**
+
+```{r}
+mean(dem_pres_shift)
+sd(dem_pres_shift)
+```
+
+**Mean and standard deviation of the Supreme Court ideology shifts
+(Republican presidencies)\\**
+
+```{r}
+mean(rep_pres_shift)
+sd(rep_pres_shift)
+```
+
+**Democratic president with the largest conservative (positive) shift in
+the Court**
+
+```{r}
+names(dem_pres_shift[dem_pres_shift == min(dem_pres_shift)])
+min(dem_pres_shift)
+```
+
+**Republican president's with the largest liberal (negative) shift in
+the Court?**
+
+```{r}
+names(rep_pres_shift[rep_pres_shift == max(rep_pres_shift)])
+max(rep_pres_shift)
+```
+
+## Question 5 (30 points)
+
+In this task you will create a plot which shows the median Supreme Court
+ideal point over time together with the ideological development of each
+justice over time.
+
+A similar plot was recently features in the Economist after the death of
+Ruth Bader Ginsburg in 2020. Those interested in the article can read it
+here:
+<https://www.economist.com/graphic-detail/2020/09/21/the-supreme-court-may-be-about-to-take-a-hard-right-turn>
+. CEU's library has a free access to articles from `The Economist`.
+
+Do the following steps:
+
+-   Create a plot that shows the median Supreme Court ideal point over
+    time. Use a thick black line (thickness equal to 4). (3 points) [The
+    figure below uses transparency level equal to 0.7]
+-   Then, add lines for the ideal points of each unique justice to the
+    same plot. Use a `for loop` for this purpose. (10 points)
+-   The color of each line should be `orangered` if the justice was
+    appointed by a Republican and `steelblue4` if he or she was
+    appointed by a Democrat. (You can assume that when a Justice first
+    appears in the data, they were appointed by the president sitting
+    during that term.) (10 points)
+-   Label each line with the justice's last name. (5 points)
+-   Briefly discuss what trends in the ideology of justices you see over
+    time. (2 points)
+
+## Answer 5
+
+Insert your plot here:
+
+```{r}
+
+plot(justices$term, justices$median_idealpt, type= "l", lwd=4, ylim=c(-10,10), xlim=c(1940,2010), ylab = "Justices' ideology", xlab="Year", main="Supreme Court Ideological Evolution")
+  for (i in unique(justices$justice)) {
+    lines(x = justices$term[justices$justice == i], y = justices$idealpt[justices$justice == i], col=col )
+    if (justices$pparty[justices$justice == i][1]=="R") {
+      col = "orangered" 
+    }
+      else { col = "steelblue4"}
+    indices = justices$justice == i
+    last_term = tail(justices$term[indices], 1)
+  last_idealpt = tail(justices$idealpt[indices], 1)
+ text(x = last_term +0.5,
+       y = last_idealpt-0.5,
+       labels = i,
+       col = col, cex = 0.5)
+}
+abline(h=0)
+
+```
+
+[Insert your answer here:]{style="color: green;"} It seems to me that
+the general trend is towards more liberal/progressive republican judges,
+which is quite interesting. According to the median points, not much h
+as changed in the last fifty years, however through this graph we can
+see that there are quite a lot of republican justices that slided
+further to the liberal ideology, some being more democrat than the
+democrats themselves.Also in the 40s and 50s, it seems the norm was for
+judges to be more conservative (including most of the democrat justices)
+
+## Question 6 (Bonus question for 20 points)
+
+Your boss really likes the graph you created in question 5, great job!
+She thinks that the graph can be tailored a bit. In, particular, she
+asks you to do the following changes:
+
+1)  Make the ideal points lines of the last justices - those who were
+    still justices between 2000 and 2008 - thicker. (5 points)
+2)  Add a point for the starting ideological point of each justice. Make
+    these points for the last justices bigger than for the remaining
+    justices. (5 points)
+3)  Make the names of the last justices readable (change their
+    positions, so that the names do not overlap) and color them
+    according to the party color of the president that appointed these
+    justices. (5 points)
+4)  Include the following information: (5 points)
+
+-   Label the conservative and liberal side of the ideological spectrum
+    using arrows
+-   Add a label for the median justice line.
+-   Add a legend for the colors of the justices ideal points. Make the
+    same legend as in the example below. Notice that this legend has no
+    box, the legend points are horizontal and there is a title.
+
+Hints:
+
+-   To specify which justices' should have thicker lines and bigger
+    points, you can use different conditional statements within the loop
+    (e.g. `if(){}, if(){}else{}` etc.).
+-   If you would like to find out which justices were justices between
+    2000 and 2008 you can use the value matching `%in%` operator. This
+    operator allows you to compare which elements in a given vector
+    (e.g. vector x) occur in another vector (e.g. vector y). For
+    example, let's say you have a vector x with the numbers
+    `c(1,3,2,5,4)` and another vector y with the numbers `c(3,4,6)`. You
+    would like to know which elements in x have a match in y. To do so
+    you can run `x %in% y` and R will return a vector with TRUE and
+    FALSE for each element in x. TRUE indicates that a given element in
+    x had a match in y.
+
+```{r}
+x <- c(1,3,2,5,4)
+y <- c(3,4,6)
+
+res_match <- x %in% y
+res_match
+# You can count how many elements were matched by using `sum(res_match)`
+sum(res_match)
+```
+
+-   remember that you can adjust the colors to be transparent by
+    applying the function
+    `adjustcolor("colorname", number_for_transparency_level)`. The graph
+    below uses most of the time `adjustcolor("orangered", 0.8)` and
+    `adjustcolor("steelblue4", 0.8)`
+
+-   you can draw arrows using the function `arrows()`, where you need to
+    specify the coordinates of the arrow using the arguments `x0`, `y0`
+    (starting point of the arrow on the x and y coordinates
+    respectively), `x1`, `y1` (end point of the arrow on the x and y
+    coordinates respectively). Additionally, the following arguments
+    were specified in the `arrows()` function used in the below plot:
+    `length = 0.05`, `angle = 30`, `code = 2`, `col = steelblue4`.
+
+-   To learn more how to draw a legend with specific features, type
+    `?legend` in the console. The R documentation provides detailed
+    information on many features that can be specified in the legend.
+    For example, you find information about the type of the box to be
+    drawn around the legend (argument `bty`), whether to set the legend
+    horizontal or vertical (argument `horiz`), the color, adjustment and
+    the text of the title within the legend (arguments `title.col`,
+    `title.adj`, `title`)
+
+## Answer 6
+
+Insert your plot here:
+
+```{r}
+plot(justices$term, justices$median_idealpt, type= "l", lwd=4, ylim=c(-8,8), xlim=c(1940,2010), ylab = "Justices' ideology", xlab="Year", main="Supreme Court Ideological Evolution")
+  for (i in unique(justices$justice)) {
+    lines(x = justices$term[justices$justice == i], y = justices$idealpt[justices$justice == i], col=col )
+    if (justices$pparty[justices$justice == i][1]=="R") {
+      col = "orangered" 
+    }
+      else { col = "steelblue4"}
+    indices = justices$justice == i
+    last_term = tail(justices$term[indices], 1)
+  last_idealpt = tail(justices$idealpt[indices], 1)
+ text(x = last_term +1,
+       y = last_idealpt-0.5,
+       labels = i,
+       col = col, cex = 0.4)
+ 
+     if (tail(justices$term[justices$justice == i],1) >= 2000 & tail(justices$term[justices$justice == i],1)<= 2008) {
+      lines(x = justices$term[justices$justice == i], y = justices$idealpt[justices$justice == i], col = col, lwd = 2, cex=1)
+    } else {
+    }
+}
+abline(h=0)
+arrows(x0 = 1940, y0 = -5, y1 = -7, length = 0.05, angle = 30, code = 2, col = "steelblue4")
+text(x=1945, y=6, "More \nConservative", cex= 0.6, col="steelblue4")
+arrows(x0=1940, y0=5, y1 = 7, length=0.05, angle=30, code=2, col="steelblue4")
+text(x=1943, y=-6, "More \nLiberal", cex= 0.6, col="steelblue4")
+legend("bottomright",legend = c("Democrat", "Republican"), fill = c("steelblue4", "orangered"), title = "Appointed by a", bty = "n", text.col = c("steelblue4", "orangered"),horiz=T, cex = 0.7)
+
+
+```
+
+## Evaluation
+
+-   5 questions for a total of 100 points
+-   1 bonus question for a total of 20 points
