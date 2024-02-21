@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Alin Ierima">
+
+<title>Data Report 2</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="data-report2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="data-report2_files/libs/quarto-html/quarto.js"></script>
+<script src="data-report2_files/libs/quarto-html/popper.min.js"></script>
+<script src="data-report2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="data-report2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="data-report2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="data-report2_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="data-report2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="data-report2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="data-report2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data Report 2</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Alin Ierima </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="dataset" class="level1">
+<h1>Dataset</h1>
+<p><strong>Source</strong>: We use data from a online pilot experiment run by Marc Kaufmann. In that study, participants where asked their opinions about several topics (such as “Self-Control” or “Neuroscience”). Specifically, they were asked how controversial, how familiar, etc they thought the topic was; as well as how often they talk with colleagues or family about the topic; and finally whether they heard of the topic last week. All questions except for hearing about the topic last week were answered by choosing a number from 1 to 7 (1 being the least familar/controversial/etc, 7 being the most familiar/controversial/etc). The question on hearing about the topic last week was answered with “yes” or “no”.</p>
+<p><strong>Original Data Documentation:</strong></p>
+<ul>
+<li><strong>pid</strong>: the unique <strong>participant ID</strong>; a total of 85 unique participants. <strong>It has the “numeric” class.</strong></li>
+<li><strong>tpc:</strong> the <strong>topic</strong> about which the participant was asked. Can be of <strong>12 types:</strong> 1.Self-control, 2.Neuroscience, 3. AI, 4. Cognitive Skills, 5. Covid, 6. Environment, 7.Socioeconomic inequality, 8.Politics, 9.Gender inequality, 10.Sports, 11.Addiction, 12.Health. <strong>It has the “character” class.</strong></li>
+<li><strong>qn:</strong> the <strong>question</strong> the person was asked. Can be of <strong>9 types</strong>: 1.controversial, 2.familiar, 3.heard-of-last-week, 4.how-often-talk-colleagues, 5.how-often-talk-family, 6.important, 7.interesting, 8.learn-more, 9.understandable. <strong>It has the “character” class.</strong>
+<ul>
+<li>Must be read as in the following example: How “controversial” - or familiar, or how much they heard about, etc. - the given topic is? How often does the family talk about the given topic?</li>
+</ul></li>
+<li><strong>ans:</strong> the <strong>answer</strong> given by the person. The answer <strong>generally</strong> <strong>ranges from 1</strong>(least familiar/controversial etc) <strong>to 7</strong> (the most familiar/controversial etc). The only exception is the question on hearing about the topic last week, which was answered with <strong>“yes” or “no”</strong>. <strong>It has the “character” class.</strong></li>
+</ul>
+</section>
+<section id="cleaning" class="level1">
+<h1>Cleaning</h1>
+<p><strong>Documentation of cleaned data:</strong></p>
+<ul>
+<li><p><strong>ID</strong>: the unique participant ID; a total of 85 unique participants. It has the “numeric” class.</p></li>
+<li><p><strong>Topic</strong>: the topic about which the participant was asked. Can be of 12 types: 1.Self-control, 2.Neuroscience, 3. AI, 4. Cognitive Skills, 5. Covid, 6. Environment, 7.Socioeconomic inequality, 8.Politics, 9.Gender inequality, 10.Sports, 11.Addiction, 12.Health. It has the “character” class.</p></li>
+<li><p><strong>Question</strong>: the question the person was asked. Can be of 9 types: 1.controversial, 2.familiar, 3.heard-of-last-week, 4.how-often-talk-colleagues, 5.how-often-talk-family, 6.important, 7.interesting, 8.learn-more, 9.understandable. It has the “character” class.</p></li>
+<li><p><strong>QAnswer</strong>: The <strong>answer</strong> to the question. The answer generally ranges from 1(least familiar/controversial etc) to 7 (the most familiar/controversial etc). The exception being the question on hearing about the topic last week, <strong>ranging from 0 (did not hear) to 1 did hear). It has the “integer” class.</strong></p></li>
+</ul>
+</section>
+<section id="exploration" class="level1">
+<h1>Exploration</h1>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+# Groups:   Topic [1]
+  Topic Question                  mean_score
+  &lt;chr&gt; &lt;chr&gt;                          &lt;dbl&gt;
+1 AI    controversial                  5.25 
+2 AI    familiar                       4.51 
+3 AI    heard-of-last-week             0.913
+4 AI    how-often-talk-colleagues      3.28 
+5 AI    how-often-talk-family          3.04 
+6 AI    important                      5.28 </code></pre>
+</div>
+</div>
+<p>Shown above, you can find a table that includes the topic, with the best and worst scores for every question. Note that I also included the points for easier understanding. Next, we delve into the data looking at the best and worst scores for every question.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 9 × 5
+  Question                  Best_scores       Best_scores_points Worst_scores
+  &lt;chr&gt;                     &lt;chr&gt;                          &lt;dbl&gt; &lt;chr&gt;       
+1 controversial             Politics                       6.30  Neuroscience
+2 familiar                  Covid                          5.48  Neuroscience
+3 heard-of-last-week        AI                             0.913 Neuroscience
+4 how-often-talk-colleagues Health                         3.69  Neuroscience
+5 how-often-talk-family     Health                         4.53  Neuroscience
+6 important                 Health                         6.48  Sports      
+7 interesting               Health                         5.39  Sports      
+8 learn-more                Health                         5.39  Sports      
+9 understandable            Gender Inequality              5.36  Neuroscience
+  Worst_scores_points
+                &lt;dbl&gt;
+1               2.41 
+2               3.40 
+3               0.294
+4               1.87 
+5               1.96 
+6               3.09 
+7               3.4  
+8               3.2  
+9               3.06 </code></pre>
+</div>
+</div>
+<p>Takeaways from this table:</p>
+<ul>
+<li><p>The respondents saw politics as the most controversial topic, with a big score (6.3 points). This is in line with the expectation that politics is a space with many divergences.</p></li>
+<li><p>Health is both the subject that the respondents talk most about with family and colleagues, and the one which is seen as interesting by most people. There is almost unanimity in declaring health as “most” important (score of 6.48 out of 7).</p></li>
+<li><p>The popularity of AI is reflected in the fact that 91% of respondents have heard about the topic within a week.</p></li>
+<li><p>Neuroscience is the subject that is, on average, the least understood, controversial, or talked about. Only 29% of respondents have heard about it within a week.</p></li>
+</ul>
+<p>Let’s address this further. The table attached below indicates the respondents, on average, do not discuss the mentioned topics with their colleagues or even with their families. On the other hand, respondents resonated with the “important” topic questions the most and attributed better scores on average. The responses vary the most for the question regarding the most controversial topic (sd of 2.07) and the least for the familiarity question.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 9 × 6
+  Question                  `Mean Score` `Standard Deviation` `1st Quartile`
+  &lt;chr&gt;                            &lt;dbl&gt;                &lt;dbl&gt;          &lt;dbl&gt;
+1 controversial                    4.25                 2.07               2
+2 familiar                         4.71                 1.52               4
+3 heard-of-last-week               0.678                0.468              0
+4 how-often-talk-colleagues        2.76                 1.72               1
+5 how-often-talk-family            3.15                 1.73               2
+6 important                        5.52                 1.71               5
+7 interesting                      4.68                 1.84               4
+8 learn-more                       4.49                 1.98               3
+9 understandable                   4.63                 1.57               4
+  `Median Score` `3rd Quartile`
+           &lt;int&gt;          &lt;dbl&gt;
+1              4              6
+2              5              6
+3              1              1
+4              2              4
+5              3              4
+6              6              7
+7              5              6
+8              5              6
+9              5              6</code></pre>
+</div>
+</div>
+<p>Visualizing the data for “Controversial”, there seems to be the most consensus about AI and Politics that they are controversial topics. Most variation can be found for COVID, environment, health and sports. 50% of respondents believe neuroscience and sports are uncontroversial or barely controversial topics.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report2_files/figure-html/controversial-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p><br>
+</p>
+<p>Visualizing the “Familiar” data, there is overall agreement that 50% of respondents believe themselves to be familiar or very familiar with the topics (beginning from 5 out of 7). The only exceptions are cognitive skills and neuroscience, for which respondents believe they are less familiar, and COVID, with which 50% of respondents were very familiar (6 out of 7). This might reflect that respondents are more comfortable with topics that require less technical skills (such as neuroscience). Additionally, the data indicates the COVID pandemic has been an important people of people’s lives in the last years.<br>
+</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report2_files/figure-html/familiar-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Visualizing the data regarding how often topics are discussed amongst colleagues, it seems there is overall less discussions with their peers. This could be due to the attempt of the respondents to separate their private life from their work life. When they do discuss, topics such as AI, Health or Politics are important, which are uncoincidentally easy discussions for small talk; Neuroscience is, of course, not, which is also reflected in the very low scores.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report2_files/figure-html/how-often-talk-colleagues-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Visualizing the data regarding discussions within family, it seems that on average there are more discussions than with the work colleagues, however in other respects they are quite similar (for example, the topics that can constitute small talk are still most popular, whereas neuroscience is not).</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report2_files/figure-html/how-often-talk-family-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The following two boxplots, regarding what is perceived as interesting by respondents and what would they like to learn more about, indicate a big part of respondents are curious about all topics, with the greatest variance for the sports topic. 50% would not want to learn more about sports, whereas there is big variability in people’s desire to learn about COVID, perhaps indicating that they need a break from the stressful times of the pandemic.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report2_files/figure-html/interesting-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report2_files/figure-html/learn-more-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Lastly, neuroscience remains the least understood subject, whereas 50% of people believe they have very good knowledge of gender inequality and sports. This might be because these might appear as very non-technical subjects that are easy to grasp without further delving into research literature.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report2_files/figure-html/understandable-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>A detailed table of the best and worst values of every topic has been attached below. These should be kept in mind by future participants in the study.</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 10%">
+<col style="width: 68%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Topic</th>
+<th style="text-align: left;">Reason Direction</th>
+<th style="text-align: left;">Reason</th>
+<th style="text-align: right;">Importance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">AI</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘AI’ scored the maximum average points of 5.33 for the question interesting.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AI</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘AI’ scored the minimum average points of 0.91 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">AI</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘AI’ is controversial.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Addiction</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Addiction’ scored the maximum average points of 6.21 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Addiction</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Addiction’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Addiction</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Addiction’ scored the minimum average points of 0.6 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Addiction</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Addiction’ is controversial.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cognitive Skills</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Cognitive Skills’ scored the maximum average points of 5.76 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cognitive Skills</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Cognitive Skills’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cognitive Skills</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Cognitive Skills’ scored the minimum average points of 0.44 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Covid</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Covid’ scored the maximum average points of 5.48 for the question familiar.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Covid</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Covid’ scored the minimum average points of 0.86 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Covid</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Covid’ is controversial.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Environment</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Environment’ scored the maximum average points of 5.88 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Environment</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Environment’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Environment</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Environment’ scored the minimum average points of 0.84 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Environment</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Environment’ is controversial.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gender Inequality</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Gender Inequality’ scored the maximum average points of 5.36 for the question understandable.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Gender Inequality</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Gender Inequality’ scored the minimum average points of 0.53 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gender Inequality</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Gender Inequality’ is controversial.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Health</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Health’ scored the maximum average points of 6.48 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Health</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Health’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Health</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Health’ scored the minimum average points of 0.89 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Neuroscience</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Neuroscience’ scored the maximum average points of 5.68 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Neuroscience</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Neuroscience’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Neuroscience</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Neuroscience’ scored the minimum average points of 0.29 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Politics</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Politics’ scored the maximum average points of 5.59 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Politics</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Politics’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Politics</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Politics’ scored the minimum average points of 0.91 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Politics</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Politics’ is controversial.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Self-control</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Self-control’ scored the maximum average points of 5.93 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Self-control</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Self-control’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Self-control</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Self-control’ scored the minimum average points of 0.49 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Socioeconomic Inequality</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Socioeconomic Inequality’ scored the maximum average points of 5.8 for the question important.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Socioeconomic Inequality</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Socioeconomic Inequality’ is important.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Socioeconomic Inequality</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Socioeconomic Inequality’ scored the minimum average points of 0.58 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Socioeconomic Inequality</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">More than 60% of people thought the topic ‘Socioeconomic Inequality’ is controversial.</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sports</td>
+<td style="text-align: left;">for</td>
+<td style="text-align: left;">The topic ‘Sports’ scored the maximum average points of 5.34 for the question understandable.</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sports</td>
+<td style="text-align: left;">against</td>
+<td style="text-align: left;">The topic ‘Sports’ scored the minimum average points of 0.78 for the question heard-of-last-week.</td>
+<td style="text-align: right;">5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>To conclude, there are some definite popularity winners when it comes to the topics (such as Health or Politics), whereas other subjects are present less worse overall scores (Neuroscience and Sport). I believe my approach would be able to scale to hundreds more topics with some small interventions. As for the future study, I would also be interested in correlating the discussions that individuals have with their type of job, as I would expect chemists and doctors to disproportionately bring the score higher than it would otherwise be the case.</p>
+</section>
+<section id="code-explanation" class="level1">
+<h1>Code Explanation</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> opinions <span class="sc">|&gt;</span>   </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(     </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">ans =</span> <span class="fu">if_else</span>(      </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>      qn <span class="sc">==</span> <span class="st">"heard-of-last-week"</span>,        <span class="fu">if_else</span>(ans <span class="sc">==</span> <span class="st">"yes"</span>, <span class="fu">as.integer</span>(<span class="dv">1</span>), <span class="fu">as.integer</span>(<span class="dv">0</span>)), <span class="fu">as.integer</span>(ans)       )     )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>If_else in this case works quite similarly to its Base R relative ifelse(). In this case, we have an if_else <strong>nested</strong> in another if_else, which would be read as following: if the question is heard-of-last-week, start a second if_else (if the value of ans is yes, set to 1; otherwise, zero), otherwise set ans as an integer.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(     </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">reason =</span> <span class="fu">paste0</span>(<span class="st">"The topic '"</span>, tpc, <span class="st">"' scored an average of "</span>,                               avg, <span class="st">" on the question how "</span>, qn, <span class="st">" it is."</span>)     )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Paste0 is used to combine multiple arguments and return a single string. Here, it concatenates 4 strings with 3 variables (tpc,avg,qn) <strong>to create a sentence.</strong></p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

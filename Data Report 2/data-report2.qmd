@@ -1,0 +1,314 @@
+---
+title: "Data Report 2"
+author: "Alin Ierima"
+format: html
+---
+
+# Dataset
+
+```{r load-libraries}
+#| output: false
+#| echo: false
+options(tibble.width = Inf)
+options(tibble.print_max = Inf)
+library(tidyverse)
+```
+
+**Source**: We use data from a online pilot experiment run by Marc Kaufmann. In that study, participants where asked their opinions about several topics (such as "Self-Control" or "Neuroscience"). Specifically, they were asked how controversial, how familiar, etc they thought the topic was; as well as how often they talk with colleagues or family about the topic; and finally whether they heard of the topic last week. All questions except for hearing about the topic last week were answered by choosing a number from 1 to 7 (1 being the least familar/controversial/etc, 7 being the most familiar/controversial/etc). The question on hearing about the topic last week was answered with "yes" or "no".
+
+```{r load-data, include=FALSE}
+opinions <- read_csv("opinions.csv")
+```
+
+**Original Data Documentation:**
+
+-   **pid**: the unique **participant ID**; a total of 85 unique participants. **It has the "numeric" class.**
+-   **tpc:** the **topic** about which the participant was asked. Can be of **12 types:** 1.Self-control, 2.Neuroscience, 3. AI, 4. Cognitive Skills, 5. Covid, 6. Environment, 7.Socioeconomic inequality, 8.Politics, 9.Gender inequality, 10.Sports, 11.Addiction, 12.Health. **It has the "character" class.**
+-   **qn:** the **question** the person was asked. Can be of **9 types**: 1.controversial, 2.familiar, 3.heard-of-last-week, 4.how-often-talk-colleagues, 5.how-often-talk-family, 6.important, 7.interesting, 8.learn-more, 9.understandable. **It has the "character" class.**
+    -   Must be read as in the following example: How "controversial" - or familiar, or how much they heard about, etc. - the given topic is? How often does the family talk about the given topic?
+-   **ans:** the **answer** given by the person. The answer **generally** **ranges from 1**(least familiar/controversial etc) **to 7** (the most familiar/controversial etc). The only exception is the question on hearing about the topic last week, which was answered with **"yes" or "no"**. **It has the "character" class.**
+
+# Cleaning
+
+```{r cleaning, echo=FALSE, warning=FALSE}
+colnames(opinions) <- c("ID", "Topic", "Question", "QAnswer")
+df <- opinions |>
+  mutate(
+    QAnswer = if_else(
+      Question == "heard-of-last-week", 
+      if_else(QAnswer == "yes", as.integer(1), as.integer(0)),
+      as.integer(QAnswer)
+      )
+    ) 
+
+```
+
+```{r storing, echo=FALSE, warning=FALSE}
+write_csv(df, "opinions-for-analysis.csv")
+```
+
+**Documentation of cleaned data:**
+
+-   **ID**: the unique participant ID; a total of 85 unique participants. It has the "numeric" class.
+
+-   **Topic**: the topic about which the participant was asked. Can be of 12 types: 1.Self-control, 2.Neuroscience, 3. AI, 4. Cognitive Skills, 5. Covid, 6. Environment, 7.Socioeconomic inequality, 8.Politics, 9.Gender inequality, 10.Sports, 11.Addiction, 12.Health. It has the "character" class.
+
+-   **Question**: the question the person was asked. Can be of 9 types: 1.controversial, 2.familiar, 3.heard-of-last-week, 4.how-often-talk-colleagues, 5.how-often-talk-family, 6.important, 7.interesting, 8.learn-more, 9.understandable. It has the "character" class.
+
+-   **QAnswer**: The **answer** to the question. The answer generally ranges from 1(least familiar/controversial etc) to 7 (the most familiar/controversial etc). The exception being the question on hearing about the topic last week, **ranging from 0 (did not hear) to 1 did hear). It has the "integer" class.**
+
+# Exploration
+
+```{r computing-mean, echo=FALSE, message=FALSE}
+
+mean_questions_each <- df |> group_by(Topic, Question) |>
+  summarize(
+    mean_score = mean(QAnswer))
+head(mean_questions_each)
+```
+
+Shown above, you can find a table that includes the topic, with the best and worst scores for every question. Note that I also included the points for easier understanding. Next, we delve into the data looking at the best and worst scores for every question.
+
+```{r, echo=FALSE}
+mean_questions <- mean_questions_each |> 
+  group_by(Question) |>
+  summarize(
+    Best_scores = Topic[mean_score == max(mean_score)],
+    Best_scores_points = mean_score[mean_score == max(mean_score)],
+    Worst_scores = Topic[mean_score == min(mean_score)],
+    Worst_scores_points = mean_score[mean_score == min(mean_score)]
+  )
+mean_questions
+```
+
+Takeaways from this table:
+
+-   The respondents saw politics as the most controversial topic, with a big score (6.3 points). This is in line with the expectation that politics is a space with many divergences.
+
+-   Health is both the subject that the respondents talk most about with family and colleagues, and the one which is seen as interesting by most people. There is almost unanimity in declaring health as "most" important (score of 6.48 out of 7).
+
+-   The popularity of AI is reflected in the fact that 91% of respondents have heard about the topic within a week.
+
+-   Neuroscience is the subject that is, on average, the least understood, controversial, or talked about. Only 29% of respondents have heard about it within a week.
+
+Let's address this further. The table attached below indicates the respondents, on average, do not discuss the mentioned topics with their colleagues or even with their families. On the other hand, respondents resonated with the "important" topic questions the most and attributed better scores on average. The responses vary the most for the question regarding the most controversial topic (sd of 2.07) and the least for the familiarity question.
+
+```{r, echo=FALSE}
+nice_table <- df |>
+    group_by(Question) |>
+    summarize(
+      mean_score = mean(QAnswer),
+      sd(QAnswer),
+      quantile(QAnswer, 0.25),
+      median_score = median(QAnswer),
+      quantile(QAnswer, 0.75)
+    )
+colnames(nice_table) <- c("Question", "Mean Score", "Standard Deviation", "1st Quartile", "Median Score", "3rd Quartile")
+nice_table
+
+   
+```
+
+Visualizing the data for "Controversial", there seems to be the most consensus about AI and Politics that they are controversial topics. Most variation can be found for COVID, environment, health and sports. 50% of respondents believe neuroscience and sports are uncontroversial or barely controversial topics.
+
+```{r controversial, echo=FALSE}
+controversial_data <- df |> filter(Question == "controversial")
+
+ggplot(controversial_data, 
+       aes(x = Topic, y = as.integer(QAnswer))) + geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  labs(title = "Boxplot of 'Controversial' Question Across Topics",
+       x = NULL, y = "QAnswer")
+
+```
+
+\
+
+Visualizing the "Familiar" data, there is overall agreement that 50% of respondents believe themselves to be familiar or very familiar with the topics (beginning from 5 out of 7). The only exceptions are cognitive skills and neuroscience, for which respondents believe they are less familiar, and COVID, with which 50% of respondents were very familiar (6 out of 7). This might reflect that respondents are more comfortable with topics that require less technical skills (such as neuroscience). Additionally, the data indicates the COVID pandemic has been an important people of people's lives in the last years.\
+
+```{r familiar, echo=FALSE}
+familiar_data <- df |> filter(Question == "familiar")
+
+ggplot(familiar_data, 
+       aes(x = Topic, y = as.integer(QAnswer))) + geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  labs(title = "Boxplot of 'Familiar' Question Across Topics",
+       x = NULL, y = "QAnswer")
+
+```
+
+Visualizing the data regarding how often topics are discussed amongst colleagues, it seems there is overall less discussions with their peers. This could be due to the attempt of the respondents to separate their private life from their work life. When they do discuss, topics such as AI, Health or Politics are important, which are uncoincidentally easy discussions for small talk; Neuroscience is, of course, not, which is also reflected in the very low scores.
+
+```{r how-often-talk-colleagues, echo=FALSE}
+how_often_talk_colleagues_data <- df |> filter(Question == "how-often-talk-colleagues")
+
+ggplot(how_often_talk_colleagues_data, 
+       aes(x = Topic, y = as.integer(QAnswer))) + geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  labs(title = "Boxplot of how often topic is discussed amongst colleagues",
+       x = NULL, y = "QAnswer")
+```
+
+Visualizing the data regarding discussions within family, it seems that on average there are more discussions than with the work colleagues, however in other respects they are quite similar (for example, the topics that can constitute small talk are still most popular, whereas neuroscience is not).
+
+```{r how-often-talk-family, echo=FALSE}
+how_often_talk_family_data <- df |> filter(Question == "how-often-talk-family")
+
+ggplot(how_often_talk_family_data, 
+       aes(x = Topic, y = as.integer(QAnswer))) + geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  labs(title = "Boxplot of how often topic is discussed with family",
+       x = NULL, y = "QAnswer")
+```
+
+The following two boxplots, regarding what is perceived as interesting by respondents and what would they like to learn more about, indicate a big part of respondents are curious about all topics, with the greatest variance for the sports topic. 50% would not want to learn more about sports, whereas there is big variability in people's desire to learn about COVID, perhaps indicating that they need a break from the stressful times of the pandemic.
+
+```{r interesting, echo=FALSE}
+interesting_data <- df |> filter(Question == "interesting")
+
+ggplot(interesting_data, 
+       aes(x = Topic, y = as.integer(QAnswer))) + geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  labs(title = "Boxplot of 'Interesting' Question Across Topics",
+       x = NULL, y = "QAnswer")
+```
+
+```{r learn-more, echo=FALSE}
+learn_more_data <- df |> filter(Question == "learn-more")
+
+ggplot(learn_more_data, 
+       aes(x = Topic, y = as.integer(QAnswer))) + geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  labs(title = "Boxplot of 'Learn-More' Question Across Topics",
+       x = NULL, y = "QAnswer")
+```
+
+Lastly, neuroscience remains the least understood subject, whereas 50% of people believe they have very good knowledge of gender inequality and sports. This might be because these might appear as very non-technical subjects that are easy to grasp without further delving into research literature.
+
+```{r understandable, echo=FALSE}
+understandable_data <- df |> filter(Question == "understandable")
+
+ggplot(understandable_data, 
+       aes(x = Topic, y = as.integer(QAnswer))) + geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
+  labs(title = "Boxplot of Answers for 'Understandable' Across Topics",
+       x = NULL, y = "QAnswer")
+
+```
+
+A detailed table of the best and worst values of every topic has been attached below. These should be kept in mind by future participants in the study.
+
+```{r last-table, echo = FALSE}
+
+
+reasons_for <- data.frame(
+  topic = NA,
+  reason_direction = NA,
+  reason = NA,
+  strength_of_reason = NA  #Dummies
+)
+
+reasons_against <- data.frame(
+  topic = NA,
+  reason_direction = NA,
+  reason = NA,
+  strength_of_reason = NA  
+)
+
+
+
+non_controversial <- mean_questions_each |>
+  filter(Question != "controversial") #high score in controversial means 'against' not 'for', so we don't want it yet
+
+max_points <- non_controversial |>
+  group_by(Topic) |>
+  filter(mean_score == max(mean_score)) 
+
+
+
+
+reasons_for <- max_points |>
+mutate(reason_direction = "for",
+       reason = paste0("The topic '", Topic, "' scored the maximum average points of ",
+                         round(mean_score, 2), " for the question ", Question, "."),
+         strength_of_reason = 5 ) |> #this is always the strongest reason since it's the best score of the topic
+  select(topic = Topic, reason_direction, reason, strength_of_reason)
+
+# filter topics where more than 60% of people thought they are important
+important_topics <- non_controversial |>
+  filter(Question == "important" & mean_score > 5.5)
+
+reasons_for <- bind_rows(reasons_for,
+                         important_topics |>
+                           mutate(reason_direction = "for",
+                                  reason = paste0("More than 60% of people thought the topic '", Topic, "' is important."),
+                                  strength_of_reason = 3) |> # fair-enough strength
+                           select(topic = Topic, reason_direction, reason, strength_of_reason))
+
+
+min_points <- non_controversial |>
+  group_by(Topic) |>
+  filter(mean_score == min(mean_score))
+
+
+min_points_controversial <- mean_questions_each |>
+  filter(Question == "controversial") |>
+  group_by(Topic) |>
+  filter(mean_score == min(mean_score))
+
+
+#now the against camp
+
+
+reasons_against <- min_points |>
+  mutate(reason_direction = "against",
+         reason = paste0("The topic '", Topic, "' scored the minimum average points of ",
+                         round(mean_score, 2), " for the question ", Question, "."),
+         strength_of_reason = 5) |>
+  select(topic = Topic, reason_direction, reason, strength_of_reason)
+
+
+controversial <- mean_questions_each |>
+  filter(Question == "controversial")
+
+# Filter topics where more than 60% of people thought they are controversial
+controversial_topics <- controversial |>
+  filter(mean_score > 4.5)
+
+
+reasons_against <- bind_rows(reasons_against,
+                             controversial_topics |>
+                               mutate(reason_direction = "against",
+                                      reason = paste0("More than 60% of people thought the topic '", Topic,   "' is controversial."),
+                                      strength_of_reason = 3) |>
+                               select(topic = Topic, reason_direction, reason, strength_of_reason))
+
+reasons_combined <- bind_rows(reasons_for, reasons_against)
+
+colnames(reasons_combined) = c("Topic", "Reason Direction", "Reason", "Importance")
+reasons_combined <- arrange(reasons_combined, Topic)
+knitr::kable(reasons_combined) #knitr is way better at showing this table
+
+```
+
+# Conclusion
+
+To conclude, there are some definite popularity winners when it comes to the topics (such as **Health or Politics**), whereas other subjects are present less worse overall scores (**Neuroscience and Sport**). I believe my approach would be able to scale to hundreds more topics with some small interventions. As for the future study, I would also be interested in **correlating the discussions that individuals have with their type of job**, as I would expect chemists and doctors to disproportionately bring the score higher than it would otherwise be the case.
+
+# Code Explanation
+
+```{r explanation_1, eval = FALSE}
+df <- opinions |>   
+  mutate(     
+    ans = if_else(      
+      qn == "heard-of-last-week",        if_else(ans == "yes", as.integer(1), as.integer(0)), as.integer(ans)       )     )
+```
+
+If_else in this case works quite similarly to its Base R relative ifelse(). In this case, we have an if_else **nested** in another if_else, which would be read as following: if the question is heard-of-last-week, start a second if_else (if the value of ans is yes, set to 1; otherwise, zero), otherwise set ans as an integer.
+
+```{r explanation_2, eval = FALSE}
+mutate(     
+  reason = paste0("The topic '", tpc, "' scored an average of ",                               avg, " on the question how ", qn, " it is.")     )
+```
+
+Paste0 is used to combine multiple arguments and return a single string. Here, it concatenates 4 strings with 3 variables (tpc,avg,qn) **to create a sentence.**
