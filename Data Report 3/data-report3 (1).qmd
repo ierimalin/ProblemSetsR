@@ -1,0 +1,291 @@
+---
+title: "Data Report 3"
+author: "Alin Ierima"
+---
+
+# Dataset
+
+```{r load-libraries, echo=FALSE}
+#| output: false
+#| echo: false
+library(tidyverse)
+```
+
+**Source**: We use the dataset from a survey run by Kaufmann, Andre, and Kőszegi. Their study analysed the behaviour of consumers, their social concerns and their beliefs on market dampening. For this data report however, we will only use a fraction of the available data in order to replicate two graphs and shortly look at the relationship between some background characteristics and differing beliefs.
+
+# Cleaning
+
+**Cleaned Documentation** - the original name is in brackets if it is changed:
+
+-   **scenario**(vig): contains **eight** scenarios that are subsequently used to assess dampening effects: fuel, meat, flights, subelectricity, subhouse, energy, subclothing, subcoffee. Note that the prefix `sub` indicates switching to a more sustainable counterpart, while the others refer to reducing the consumption of said good. Saved as a **factor**.
+
+-   **conseq**: contains **four** scenarios that are used to assess concerns for consequences: textile(wages), chicken(animal welfare), co2(emmissions), (non-reciclable)waste. Saved as **factor**.
+
+-   **effect**: the dampening effect that consumers expect the market to exert. Goes from **1 to 5**: 1(decrease by more), 2(decrease one-to-one), 3(decrease by less), 4(no effect), 5(actually increase). Saved as **factor**.
+
+-   **conseq_positive**(wtp_1) - Social concerns in an effective situation (when their action has a positive consequence). Ranges from **0 to 10000**. Saved as **numeric**.
+
+-   **conseq_negative**(wtp_2) - Social concerns in an ineffective situation. Otherwise same as above.
+
+-   **politics** - Political affiliation. Ranges from 1 to 3: Republican, Democratic and Independent. Saved as **factor**
+
+-   **Gender** - Ranges from 1 to 5: Male, Female, Non-Binary, Self-Describe, Prefer not to say. Saved as **factor**.
+
+-   **Age** - Saved as **numeric**.
+
+```{r read, echo=FALSE}
+library(haven)
+consumers_raw <- read_sav("consumers_raw.sav")
+
+```
+
+```{r cleaning, echo=FALSE}
+library(dplyr)
+
+consumers <- consumers_raw |>
+  select(vig, conseq, effect, explanation, wtp_1, wtp_2, wtp_explain_same, wtp_explain_diff, age, politics, gender) |>
+  filter(vig != "") |> #dropping the useless nulls that don't mean literally anything
+  mutate(
+    scenario = as.factor(vig),
+    effect = as.factor(effect),
+    conseq = as.factor(conseq),
+    politics = as.factor(politics),
+    gender = as.factor(gender),
+    conseq_positive = as.numeric(wtp_1),
+    conseq_negative = as.numeric(wtp_2),
+  ) |>
+  select(scenario, conseq, effect, conseq_positive, conseq_negative, age, politics, gender)
+  
+write.csv(consumers, "cleaned_data.csv")
+
+
+
+
+```
+
+# Exploration
+
+1.  Replicating `fig_beliefs.pdf`
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(patchwork)
+
+percentages <- consumers |>
+  group_by(scenario, effect) |>
+  summarise(count = n()) |>
+  mutate(percentage = round(count / sum(count) * 100, 0))
+
+# preparing better labels
+percentages$scenario <- ifelse(percentages$scenario == "energy", "Reducing Energy",
+                              ifelse(percentages$scenario == "flights", "Reducing Plane Trips",
+                                    ifelse(percentages$scenario == "fuel", "Reducing Fuel",
+                                    ifelse(percentages$scenario == "meat", " Reducing Meat",
+                        ifelse(percentages$scenario == "subelectricity", "Switching to \n Green Electricity",
+                           ifelse(percentages$scenario == "subhouse", "Switching to \n Energy efficient Home",
+                          ifelse(percentages$scenario == "subclothing", "Switching to \n Second-hand Clothing",
+                    ifelse(percentages$scenario == "subcoffee", "Switching to \n Fairtrade Coffee", NA))))))))
+
+percentages$effect <- ifelse(percentages$effect == 1, "Decreases by more",
+                          ifelse(percentages$effect == 2, "Decreases 1-to-1", 
+                                 ifelse(percentages$effect == 3, "Decreases by less", 
+                                        ifelse(percentages$effect == 4, "Does not change", 
+                                               ifelse(percentages$effect == 5, "Actually increases", NA)))))
+
+pooled_percentages <- percentages |>
+  group_by(effect) |>
+  summarise(pooled_percentage = sum(count) / sum(percentages$count) * 100) |>
+    mutate(pooled_percentage = round(pooled_percentage, 0))
+
+#plot for every single scenario
+individual_plot <- ggplot(percentages, aes(x = scenario, y = percentage, fill = effect)) +
+  geom_col(show.legend = F) +
+  geom_text(aes(label = paste0(percentage, "%")), position = position_stack(vjust = 0.5), color = "black") +
+  labs(x = NULL, y = "Percentage (%)", title = "Distribution of Effects for Each Scenario") +
+  theme_minimal() +
+   theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+pooled_plot <- ggplot(pooled_percentages, aes(x = "", y = pooled_percentage, fill = effect)) +
+  geom_bar(position = "stack", stat = "identity") + 
+  geom_text(aes(label = paste0(pooled_percentages$pooled_percentage, "%")), position = position_stack(vjust = 0.5), color = "black") +labs(x = NULL, y = NULL, title = "Pooled Distribution of Effects") +  theme_minimal()
+
+
+(combined_plot <- individual_plot | pooled_plot +
+  plot_layout(
+    guides = "collect",
+    ncol = 2, 
+    widths = c(3, 1)
+  ))
+```
+
+2.  Replicating `fig_conseq.pdf`
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(patchwork)
+#creating the valuation ratio broken down for every conseq
+consumers$conseq = as.factor(consumers$conseq)
+valuation_ratio <- consumers |>
+  mutate(valuation_ratio = conseq_negative / conseq_positive) |>
+  mutate(bin = cut(valuation_ratio, breaks = c(0, 0.001, 0.25, 0.5, 0.75, 0.999, 1), include.lowest = TRUE)) |>
+  group_by(conseq, bin) |>
+  summarise(count = n( )) |>
+  group_by(conseq) |>
+  mutate(percentage = round(count / sum(count) * 100, 0))
+
+#creating the overall
+total_counts <- valuation_ratio |>
+  group_by(bin) |>
+  summarise(total_count = sum(count)) |>
+  mutate(total_percentage = round(total_count / sum(total_count) * 100, 0))
+
+
+
+
+valuation_ratio$conseq<- ifelse(valuation_ratio$conseq == "textile", "Low Wages \n (10 fairtrade garments)",
+                                ifelse(valuation_ratio$conseq == "chicken", "Animal welfare \n (20 certified chicken)",
+                                             ifelse(valuation_ratio$conseq == "co2", "CO2 Emmissions \n (Reduce by 1 ton)",
+                                                    ifelse(valuation_ratio$conseq == "waste", "Non-recyclable Waste \n (Reduce by 100 pounds)", NA))))
+
+
+bin_colors <- c("red", "firebrick", "hotpink2", "hotpink4", "slategray3", "navyblue")
+
+
+histograms <- ggplot(valuation_ratio, aes(x = bin, y = percentage, fill = bin)) +
+    geom_col() +
+    labs(x = NULL, y = "Percentage (%)", title = "Distribution of Valuation Ratios") +
+    scale_fill_manual(values = bin_colors, name = "Valuation Ratio Bins") +
+    theme_minimal() +
+    theme(axis.text.x = element_blank(),
+          legend.position = "none") +
+    facet_wrap(~ conseq, scales = "free_y", labeller = )+
+    coord_cartesian(ylim = c(0, 80))
+
+
+total_histogram <- ggplot(total_counts, aes(x = bin, y = total_percentage, fill = bin)) +
+    geom_col() +
+    labs(x = NULL, y = NULL, title = "Total Distribution of Valuation Ratios \n (all cases)") +  
+    scale_fill_manual(values = bin_colors, name = "Valuation Ratio Bins") +
+    theme_minimal() +
+    theme(axis.text.x = element_blank(), 
+          legend.position = "none") +    
+    coord_cartesian(ylim = c(0, 80))
+
+(combined_plot <- histograms + total_histogram +
+    plot_layout(guides = "collect", widths = c(4, 2)) +
+    theme(legend.position = "bottom", 
+          legend.direction = "vertical"))
+```
+
+2.  Let's see how three types of background information affect the respondents' dampening beliefs. The results will be discussed in the following section.
+
+-   Age
+
+```{r graph age, echo=FALSE}
+library(tidyverse)
+
+#define age groups
+age_groups <- cut(consumers$age, breaks = c(0, 20, 40, 60, 80, 100), labels = c("(0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]"))
+
+age_effect_df <- data.frame(age_groups, effect = consumers$effect)
+
+age_effect_summary <- age_effect_df |>
+  count(age_groups, effect) |>
+  group_by(age_groups) |>
+  mutate(prop = n / sum(n))
+
+ggplot(age_effect_summary, aes(x = age_groups, y = prop, fill = effect)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Proportion of Dampening Effect by Age Group",
+       x = "Age Group", y = "Proportion") +
+  theme(legend.position = "top")
+
+```
+
+-   Gender\
+
+```{r graph gender, echo=FALSE}
+gender_effect_df <- data.frame(gender = consumers$gender[consumers$gender == 1 | consumers$gender == 2 | consumers$gender == 3], effect = consumers$effect[consumers$gender == 1 | consumers$gender == 2 | consumers$gender == 3]) # I only want males, females and non-binary because the others are really really few and only skew the graph.
+
+gender_effect_summary <- gender_effect_df |>
+  count(gender, effect) |>
+  group_by(gender) |>
+  mutate(prop = n / sum(n))
+
+ggplot(gender_effect_summary, aes(x = gender, y = prop, fill = effect)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Proportion of Dampening Effect by Gender",
+       x = NULL, y = "Proportion") +
+  theme(legend.position = "top") +
+  scale_x_discrete(labels = c("Male", "Female", "Non-binary"))
+```
+
+-   Lastly, political affiliation. Though not necessary, I have included the NAs because it is quite interesting that some people have refused responding to this question, yet present themselves in an effect category.
+
+```{r graph politics, echo=FALSE}
+library(tidyverse)
+
+
+politics_effect_df <- data.frame(politics = consumers$politics, effect = consumers$effect)
+
+
+politics_effect_summary <- politics_effect_df |>
+  count(politics, effect) |>
+  group_by(politics) |>
+  mutate(prop = n / sum(n)) |>
+  ungroup()
+
+
+ggplot(politics_effect_summary, aes(x = factor(politics), y = prop, 
+                                    fill = effect)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Proportion of Dampening effect by Political Affiliation",
+       x = NULL, y = "Proportion") +
+  theme(legend.position = "top") +
+  scale_x_discrete(labels = c("Republican", "Democrat", "Independent"))
+
+```
+
+# Conclusions
+
+**Age** does seem to make an important difference in how people assess dampening. People under 21 are the most likely to believe their changes in consumption mean little in the big scheme of things (effect 4), but this drops in proportion for other age groups and for the most elderly, it is non-existent. The opinion that decreasing one's consumption means a 1:1 reduction in aggregate consumption is the most popular amongst all age groups (effect 2) and seems to increase the older an individual is.
+
+In regards to **gender**, females and males are quite similar, the only difference being that females are slightly more convinced by the 1:1 reduction option. Non-binary people represent more heterogeneity in their responses, as many believe their effect would be less than 1:1.
+
+In regards to **political affiliation**, republicans and independents seem the most alike in their response. Democrats are slightly less likely to believe their change of behaviour would not make lead to any aggregate change, and more likely to pick the 1:1 option.
+
+# Code Explanation
+
+I will explain the creation of the first figure. The logical order behind this task was to 1. create the plot for each scenario, 2. create the plot for the percentages of all scenarios combined, 3. find a way to combine them.
+
+```{r, eval=FALSE}
+individual_plot <- ggplot(percentages, aes(x = scenario, y = percentage, fill = effect)) +
+  geom_col(show.legend = F) +
+  geom_text(aes(label = paste0(percentage, "%")), position = position_stack(vjust = 0.5), color = "black") +
+  labs(x = NULL, y = "Percentage (%)", title = "Distribution of Effects for Each Scenario") +
+  theme_minimal() +
+   theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+```
+
+For 1, I have created a **plot of percentages**, with the x axis as scenario and y as percentages, and of course coloured by the effect. Note that this graph does not have a legend because it will share the same legend with the second one. To create the on-text percentages i needed to attach the string % to the percentages taken from the percentage object. Then, I put the ylab (xlab is not included) and a title. Theme_minimal() assures that both graphs will have a common white background. Then, I edit the x scenario labels to put them vertically because they are too long to present otherwise.
+
+```{r, eval=FALSE}
+
+pooled_plot <- ggplot(pooled_percentages, aes(x = "", y = pooled_percentage, fill = effect)) +
+  geom_bar(position = "stack", stat = "identity") +  
+  labs(x = NULL, y = NULL, title = "Pooled Distribution of Effects") +
+  theme_minimal()
+
+```
+
+For 2, I skipped defining X because I want the results in a single bar and I am directly using the data from the object on the y axis. Then, I defined it as a geom_bar stacked onto each other. The other parts are quite intuitively similar to the 1.
+
+```{r, eval=FALSE}
+(combined_plot <- individual_plot | pooled_plot +
+  plot_layout(
+    ncol = 2, 
+    widths = c(3, 1)
+  ))
+```
+
+For 3, I have used the `patchwork` package that allows for very easy combination of graphs. Therefore it was as easy as saving 1. and 2. into objects and then doing `1 | 2` (1+2 would have also done the same). I mentioned the width and that the plot should be arranged in two columns
