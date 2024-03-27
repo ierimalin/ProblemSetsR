@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Alin Ierima">
+<meta name="dcterms.date" content="2024-03-27">
+
+<title>Data Report 4</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="data-report4_files/libs/clipboard/clipboard.min.js"></script>
+<script src="data-report4_files/libs/quarto-html/quarto.js"></script>
+<script src="data-report4_files/libs/quarto-html/popper.min.js"></script>
+<script src="data-report4_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="data-report4_files/libs/quarto-html/anchor.min.js"></script>
+<link href="data-report4_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="data-report4_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="data-report4_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="data-report4_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="data-report4_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+<script src="data-report4_files/libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="data-report4_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data Report 4</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Alin Ierima </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 27, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="use-of-outside-sources" class="level1">
+<h1>Use of outside sources</h1>
+<p>I used the following outside sources for this:</p>
+<p>For every line of code that I copied from some outside source, I commented it appropriately in the code:</p>
+<ul>
+<li>For single lines of code, or code related to theming plots/tables, I simply added a comment stating the source.</li>
+<li>For larger chunks of code, I added one line, highlighting the start and end, with a brief statement whether I copy-pasted it directly or edited it further.
+<ul>
+<li>In addition, I provided a score for how well I (subjectively feel I) understand the code I used from 1 (“I do not understand it at all”) to 5 (“I understand fully”). - 5</li>
+</ul></li>
+</ul>
+<p>The scoring and potential point reductions remain as in DR2 and DR3.</p>
+</section>
+<section id="dataset" class="level1">
+<h1>Dataset</h1>
+<p><strong>Source</strong>: <a href="https://github.com/MarcKaufmann/narrow-bracketing-in-work-choices/tree/main">Replication code</a> from an experiment by Fallucchi and Kaufmann for <a href="https://trichotomy.xyz/publication/narrow-bracketing-in-work-choices/narrow-bracketing-in-work-choices.pdf">their paper on Narrow Bracketing</a>.</p>
+<p><strong>Documentation:</strong></p>
+<p>The information within the dataset refers to the following variables, for which more information can be found <a href="https://github.com/MarcKaufmann/narrow-bracketing-in-work-choices/blob/main/data/clean-data.R">here</a>. Roughly, there are columns referring to characteristics such as:</p>
+<ul>
+<li><p>demographics,</p></li>
+<li><p>the treatment (from 1 to 6: “both”, “money/low”, “none”, “money”, “before”, “after”),</p></li>
+<li><p>session date and participant number,</p></li>
+<li><p>chosen option and chosen payment.</p></li>
+</ul>
+</section>
+<section id="cleaning" class="level1">
+<h1>Cleaning</h1>
+<p>According to <code>clean-data.r</code>, each step of cleaning is given a different number. For example, the first part of the cleaning corresponds to <code>df1</code>. The raw data is cleaned in the following way (I will go step-by-step and sometimes offer thoughts/suggestions):</p>
+<ol type="1">
+<li><p>Drop variables with no information (i.e.&nbsp;constant value). This is done through creating a function that returns TRUE if the length is equal to one. Then, the function is used at the end of a pipe to subset those columns returning TRUE – this is saved in object <code>colnames_to_discard</code>, which is subsequently filtered out of the new dataframe <code>df1</code>.</p>
+<ul>
+<li>Improvement on transparency: explain why, in creating <code>colnames_to_discard</code>, the columns with prefix “wta” of suffix “incons” were filtered out.</li>
+</ul></li>
+<li><p>Replace playerNr by unique pid (<code>rownumber()</code>), keep treatment information. In actuality, the code creates a new column <code>pid</code> that contains numbers for every row (or participant), but does not remove <code>playerNr</code> to “compare with raw data”. Save as <code>df2</code>.</p>
+<ul>
+<li>Improvement on transparency: unclear what is the point of keeping playerNr then. Otherwise clean code.</li>
+</ul></li>
+<li><p>Document variable names. Here, column <code>scenario</code> is renamed as <code>scenariochosen</code>, and this is saved in object <code>df3</code>. Otherwise this is virtually identical to the previous data frame.</p>
+<ul>
+<li><p>Improvement on accessibility: I would argue that the documentation that appears after the hashtags should be put in a documentation file, as it is counter-intuitive to search the explanation of every column in the cleaning file.</p></li>
+<li><p>Unnecessary renaming (does not improve the understanding).</p></li>
+</ul></li>
+<li><p>Collect rows by scenario. First, a function is made to end in <em>_1</em> for scenario 1 and <em>_2</em> for scenario two. Then, the names are standardized and data is pivoted on a long format (tidy data), and it is saved in <code>df4</code>.</p>
+<ul>
+<li>Very good explanation in the code.</li>
+</ul></li>
+<li><p>Identify inconsistent choices by scenarios. The function <code>is_consistent</code> is created to return 0 if the first argument is less than or equal to second parameter, otherwise 1. This function is used to create columns checking consistency, and then those columns’ values are turned into logical arguments. Lastly, if by the last column (consistent15) there is a NA or vector consistent15 is equal to the result of zero an error is made.</p>
+<ul>
+<li><p>Improvement on iterations: columns consistent 1 - 15 could have been made as a loop, otherwise I think it was quite annoying to do every line manually. Also, if the <code>is_consistent</code> function was not an ifelse, it would have returned a logical argument without the mutation creating df5 (line 126-127).</p></li>
+<li><p>The relevance of stopifnot() is a little confusing, even though it does the job (of letting an error if the conditions are not true). This part could have been removed in the final code, however.</p></li>
+</ul></li>
+<li><p>Get unique switching point for consistent choices by scenario x pid, or get the lowest switching point, and number of inconsistent choices per person per scenario. For this, the data was reshaped into a longer format, then grouped by <code>pid</code> and <code>scenario</code> and the number of inconsistent choices were summed up. The second switching point was set to 17 if they never chose higher work option. Then, the previous data frame was joined with these changes, and saved in <code>df6.</code></p></li>
+<li><p>Compute reservation wages from switching points and treatments/scenarios. The switching point was multiplied by 0.25 ($) to calculate the reservation wage for each participant and unnecessary columns were dropped.</p></li>
+<li><p>Recoding treatment and gender. For treatment, treatments 1,2,3 were recoded as “narrow”, “low” and “broad” if before 1 March 2020; treatments 4 and bigger as “partial” if before 1 March; treatments 1 and 2 as “before” and “after”, respectively, if after 1 March. In regards to gender, 1 was changed to “male”, 2 to “female”, 3 to “other”.</p>
+<ul>
+<li>I would have personally used ifelse() instead of case_when() because the function is much more known and straightforward, but would have led to essentially the same thing</li>
+</ul></li>
+<li><p>Save smaller dataset for direct analysis</p>
+<p><em>!! In the explanation of cleaning the dataset there are 8 steps, but in reality there are 9 (missing step 8).</em></p></li>
+</ol>
+<p>Now, moving forward to some applied changes.</p>
+<p>For <code>df4 -&gt; df5</code>, I will suggest a less repetitive way of doing the same code. For illustration reasons, I will provide my modified code below. The logic behind this code was to create a loop checking for consistency for each of the 15 <code>wta</code>’s, instead of doing it manually. Additionally, I used more intuitive functions (such as<code>colnames()</code>and<code>ifelse()</code>) and made it so that the <code>is_consistent</code> function automatically returns a logical argument, instead of having to do that later (as in the original code).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>is_consistent <span class="ot">&lt;-</span> <span class="cf">function</span>(wta0, wta1) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  wta0 <span class="sc">&lt;=</span> wta1</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>df5b <span class="ot">&lt;-</span> df4</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">15</span>) {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  col_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"consistent"</span>, i)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  df5b[[col_name]] <span class="ot">&lt;-</span> <span class="fu">is_consistent</span>(df4[[<span class="fu">paste0</span>(<span class="st">"wta"</span>, i)]], df4[[<span class="fu">paste0</span>(<span class="st">"wta"</span>, i <span class="sc">+</span> <span class="dv">1</span>)]])</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>consistent_cols <span class="ot">&lt;-</span> <span class="fu">colnames</span>(df5b)[<span class="fu">startsWith</span>(<span class="fu">colnames</span>(df5b), <span class="st">"consistent"</span>)]</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>df5b[[col_name]] <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(df5b[[col_name]]), <span class="cn">NA</span>, <span class="fu">as.logical</span>(df5b[[col_name]]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>It is important to check, however, whether this version and the original one produce the same results. This can be done quickly through the <code>identical()</code> function, where <code>df5</code> is the original and <code>df6b</code> is my version of the code.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">identical</span>(<span class="fu">table</span>(df5<span class="sc">$</span>consistent15), <span class="fu">table</span>(df5b<span class="sc">$</span>consistent15))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>Next, we will take a closer look at <code>df6a -&gt; df6b</code>. We are interested in the transformation that the <code>df6b</code> dataframe suffered, therefore I will show the before and after below.</p>
+<p><strong>Before (or df6a)</strong></p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">pid</th>
+<th style="text-align: left;">scenario</th>
+<th style="text-align: right;">option_number</th>
+<th style="text-align: right;">wta</th>
+<th style="text-align: left;">consistent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>After (df6b)</strong></p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">pid</th>
+<th style="text-align: left;">scenario</th>
+<th style="text-align: right;">inconsistent_choices</th>
+<th style="text-align: right;">switching_point</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">17</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">12</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Essentially, this code grouped the data frame by pid and scenario, and then 1. created a column representing the sum of <code>inconsistent choices</code> (!consistent), without NAs, and 2. created column <code>switching_point</code> that took the option numbers of <code>wta == 2</code>, sorted them and attributed number 17 to those choices where no valid option number is available.</p>
+<p>Let’s take the <code>summarize()</code> step by step and check whether it does what we think it does. I will check the part with <code>inconsistent_choices</code>. If the code did what it should have, then the sum of <code>consistent == FALSE</code> in <code>df6a</code> should be identical to the sum of the newly-created <code>inconsistent_choices</code> in <code>df6b</code>. The former amounts to 2599, whereas the latter to 2599, essentially proving the transformation successful.</p>
+<p>For the second part, <code>switching_point</code> is supposed to filter the second <code>wta</code>, and then sort the filtered <code>option_number</code> in ascending order, with NAs at the end of the list. Practically this transformation identifies the lowest option number at which participants chose the higher work option. If there are no such choices, it defaults to 17. One hint for whether the code did what it should have is the number of 17s; in <code>df6a</code>, the sum of 17s is 0, whereas for <code>df6b</code> it is 362, indicating that 17s were indeed created and giving us a clue that the transformation did take place.</p>
+<p>Another way (more convincing) is to create a mockup data frame with values which, if the transformation is correct, should be transformed to 17. Here is the table with mockup data.</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">pid</th>
+<th style="text-align: right;">scenario</th>
+<th style="text-align: right;">option_number</th>
+<th style="text-align: right;">wta</th>
+<th style="text-align: left;">consistent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>As seen below, this indeed happens. For the third entry of the above table, there is no valid option number where <code>wta</code> is equal to two, therefore it was defaulted to 17, as specified in the code.</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">pid</th>
+<th style="text-align: right;">scenario</th>
+<th style="text-align: right;">inconsistent_choices</th>
+<th style="text-align: right;">switching_point</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">17</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="exploration" class="level1">
+<h1>Exploration</h1>
+<ol type="1">
+<li>The replication of Table 1 from <a href="https://trichotomy.xyz/publication/narrow-bracketing-in-work-choices/narrow-bracketing-in-work-choices.pdf">the study</a>:</li>
+</ol>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small" data-quarto-postprocess="true">
+<caption>Summary statistics for main treatments.</caption>
+<tbody>
+<tr class="odd">
+<td style="text-align: left; font-weight: bold;"></td>
+<td style="text-align: right; font-weight: bold;">NONE</td>
+<td style="text-align: right; font-weight: bold;">BOTH</td>
+<td style="text-align: right; font-weight: bold;">MONEY/LOW</td>
+<td style="text-align: right; font-weight: bold;">MONEY</td>
+<td style="text-align: right; font-weight: bold;">p-value</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Participants</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">320</td>
+<td style="text-align: right;">196</td>
+<td style="text-align: right;">213</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Attrition</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">20.3%</td>
+<td style="text-align: right;">13.3%</td>
+<td style="text-align: right;">16.4%</td>
+<td style="text-align: right;">0.22</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Final Participants</td>
+<td style="text-align: right;">164</td>
+<td style="text-align: right;">255</td>
+<td style="text-align: right;">170</td>
+<td style="text-align: right;">178</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Share Female</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">0.38</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: right;">0.91</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Age</td>
+<td style="text-align: right;">37.8</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">35.1</td>
+<td style="text-align: right;">36</td>
+<td style="text-align: right;">0.01</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tediousness</td>
+<td style="text-align: right;">7.54</td>
+<td style="text-align: right;">7.45</td>
+<td style="text-align: right;">7.33</td>
+<td style="text-align: right;">7.54</td>
+<td style="text-align: right;">0.86</td>
+</tr>
+<tr class="even" data-grouplength="2">
+<td colspan="6" style="text-align: left; border-bottom: 1px solid;"><strong>Inconsistent Choices</strong></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; padding-left: 2em;" data-indentlevel="1">Scenario 1</td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">18.8%</td>
+<td style="text-align: right;">20.4%</td>
+<td style="text-align: right;">22.1%</td>
+<td style="text-align: right;">0.59</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; padding-left: 2em;" data-indentlevel="1">Scenario 2</td>
+<td style="text-align: right;">15%</td>
+<td style="text-align: right;">18.4%</td>
+<td style="text-align: right;">18.9%</td>
+<td style="text-align: right;">22.1%</td>
+<td style="text-align: right;">0.33</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+</div>
+<ol start="2" type="1">
+<li>Now, I will create similar summary statistics tables for some subsets of participants, which requires editing the code (and functions) accordingly. I opted to create yet another function named <code>subset_summary_stats</code> which should make things easier for doing different subsets. Here is a table for only males.</li>
+</ol>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small" data-quarto-postprocess="true">
+<caption>Summary statistics for main treatments.</caption>
+<tbody>
+<tr class="odd">
+<td style="text-align: left; font-weight: bold;"></td>
+<td style="text-align: right; font-weight: bold;">NONE</td>
+<td style="text-align: right; font-weight: bold;">BOTH</td>
+<td style="text-align: right; font-weight: bold;">MONEY/LOW</td>
+<td style="text-align: right; font-weight: bold;">MONEY</td>
+<td style="text-align: right; font-weight: bold;">p-value</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Participants</td>
+<td style="text-align: right;">99</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: right;">101</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Attrition</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Final Participants</td>
+<td style="text-align: right;">99</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: right;">101</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Share Female</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Age</td>
+<td style="text-align: right;">35.6</td>
+<td style="text-align: right;">32.9</td>
+<td style="text-align: right;">34.8</td>
+<td style="text-align: right;">35.3</td>
+<td style="text-align: right;">0.18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tediousness</td>
+<td style="text-align: right;">7.16</td>
+<td style="text-align: right;">7.36</td>
+<td style="text-align: right;">7.33</td>
+<td style="text-align: right;">7.61</td>
+<td style="text-align: right;">0.9</td>
+</tr>
+<tr class="even" data-grouplength="2">
+<td colspan="6" style="text-align: left; border-bottom: 1px solid;"><strong>Inconsistent Choices</strong></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; padding-left: 2em;" data-indentlevel="1">Scenario 1</td>
+<td style="text-align: right;">23.2%</td>
+<td style="text-align: right;">22.4%</td>
+<td style="text-align: right;">20.8%</td>
+<td style="text-align: right;">23.6%</td>
+<td style="text-align: right;">0.96</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; padding-left: 2em;" data-indentlevel="1">Scenario 2</td>
+<td style="text-align: right;">19.2%</td>
+<td style="text-align: right;">23.7%</td>
+<td style="text-align: right;">18.8%</td>
+<td style="text-align: right;">21.8%</td>
+<td style="text-align: right;">0.75</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+</div>
+<p>Lastly, summary statistics for young people (younger than 27):</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small" data-quarto-postprocess="true">
+<caption>Summary statistics for main treatments (only young people).</caption>
+<tbody>
+<tr class="odd">
+<td style="text-align: left; font-weight: bold;"></td>
+<td style="text-align: right; font-weight: bold;">NONE</td>
+<td style="text-align: right; font-weight: bold;">BOTH</td>
+<td style="text-align: right; font-weight: bold;">MONEY/LOW</td>
+<td style="text-align: right; font-weight: bold;">MONEY</td>
+<td style="text-align: right; font-weight: bold;">p-value</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Participants</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">52</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Attrition</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Final Participants</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">52</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Share Female</td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">0.44</td>
+<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">0.35</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Age</td>
+<td style="text-align: right;">24.4</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">24.8</td>
+<td style="text-align: right;">24.2</td>
+<td style="text-align: right;">0.39</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tediousness</td>
+<td style="text-align: right;">7.28</td>
+<td style="text-align: right;">6.9</td>
+<td style="text-align: right;">7.6</td>
+<td style="text-align: right;">6.6</td>
+<td style="text-align: right;">0.75</td>
+</tr>
+<tr class="even" data-grouplength="2">
+<td colspan="6" style="text-align: left; border-bottom: 1px solid;"><strong>Inconsistent Choices</strong></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; padding-left: 2em;" data-indentlevel="1">Scenario 1</td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">19.2%</td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">6.7%</td>
+<td style="text-align: right;">0.41</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; padding-left: 2em;" data-indentlevel="1">Scenario 2</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">23.1%</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">6.7%</td>
+<td style="text-align: right;">0.53</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+</div>
+<ol start="3" type="1">
+<li>The replication of Figure 2 from the study.</li>
+</ol>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="data-report4_files/figure-html/rep2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<ul>
+<li>I will compute two p-values from the figures just to see whether they are correct. My quick check confirms the values that were hard-coded in the replication data: my computed p-value for the <code>scenario 1</code> t-test comparing the means of treatments <code>"NONE"</code> and <code>"BOTH"</code> is 1.0576684^{-8}, whereas the <code>scenario 2</code> t-test comparing the treatments <code>"MONEY/LOW"</code> and <code>"BOTH"</code> is 0.753307; both values correspond to the labels of &lt;0.001, respectively 0.753, confirming the numbers.</li>
+</ul>
+</section>
+<section id="conclusions" class="level1">
+<h1>Conclusions</h1>
+<p>As feedback, it was quite interesting to do a partial replication on an actual study. Perhaps the biggest difficulty was to understand the context, as I lack academical knowledge in economics-related concepts such as bracketing. Overall I am happy that I could go around hundreds of lines of code and find what was needed with relative ease, despite the fact the process was time-consuming.</p>
+</section>
+<section id="code-explanation" class="level1">
+<h1>Code Explanation</h1>
+<p>The file <code>means_and_tests.R</code> generates many deprecated features due to old age, however they are not too serious (the code is still usable). Regardless, let’s look at two instances of deprecated code and how to fix it quickly.</p>
+<p>Between lines 651-653, this code gives the following warning:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>money_and_none_means <span class="ot">&lt;-</span> consistent_df <span class="sc">%&gt;%</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(treatment <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"NONE"</span>, <span class="st">"MONEY"</span>, <span class="st">"BOTH"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>(<span class="sc">-</span>scenario, <span class="sc">-</span>treatment)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Supplying `...` without names was deprecated in tidyr 1.0.0.
+ℹ Please specify a name for each selection.
+ℹ Did you want `data = c(-scenario, -treatment)`?</code></pre>
+</div>
+</div>
+<p>This is because nowadays specifying columns to be nested without naming them is a deprecated feature. The documentation suggests naming a nested column instead, so as to ensure clarity:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>money_and_none_means <span class="ot">&lt;-</span> consistent_df <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(treatment <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"NONE"</span>, <span class="st">"MONEY"</span>, <span class="st">"BOTH"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>(<span class="at">data =</span> <span class="fu">c</span>(<span class="sc">-</span>scenario, <span class="sc">-</span>treatment)) <span class="co">#The change being "data"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Checking the whole code, I came to the conclusion this seems to be the only issue that produces the dozens of warnings in the code. Therefore, I will show one more example of a fix for this warning (lines 686-688):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>money_both_table_pooled_gender <span class="ot">&lt;-</span> consistent_df <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(treatment <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"MONEY"</span>, <span class="st">"BOTH"</span>, <span class="st">"MONEY/LOW"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>(<span class="sc">-</span>scenario)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Supplying `...` without names was deprecated in tidyr 1.0.0.
+ℹ Please specify a name for each selection.
+ℹ Did you want `data = -scenario`?</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>money_both_table_pooled_gender <span class="ot">&lt;-</span> consistent_df <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(treatment <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"MONEY"</span>, <span class="st">"BOTH"</span>, <span class="st">"MONEY/LOW"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>(<span class="at">data =</span> <span class="sc">-</span>scenario)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

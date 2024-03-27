@@ -1,0 +1,677 @@
+---
+title: "Data Report 4"
+author: "Alin Ierima"
+date: "`r Sys.Date()`"
+---
+
+# Use of outside sources
+
+I used the following outside sources for this:
+
+For every line of code that I copied from some outside source, I commented it appropriately in the code:
+
+-   For single lines of code, or code related to theming plots/tables, I simply added a comment stating the source.
+-   For larger chunks of code, I added one line, highlighting the start and end, with a brief statement whether I copy-pasted it directly or edited it further.
+    -   In addition, I provided a score for how well I (subjectively feel I) understand the code I used from 1 ("I do not understand it at all") to 5 ("I understand fully"). - 5
+
+The scoring and potential point reductions remain as in DR2 and DR3.
+
+# Dataset
+
+**Source**: [Replication code](https://github.com/MarcKaufmann/narrow-bracketing-in-work-choices/tree/main) from an experiment by Fallucchi and Kaufmann for [their paper on Narrow Bracketing](https://trichotomy.xyz/publication/narrow-bracketing-in-work-choices/narrow-bracketing-in-work-choices.pdf).
+
+```{r, message=FALSE, echo=FALSE}
+library(readr)
+clean_data <- read_csv("clean_data.csv")
+full_raw_data <- read_csv("full_raw_data.csv")
+```
+
+**Documentation:**
+
+The information within the dataset refers to the following variables, for which more information can be found [here](https://github.com/MarcKaufmann/narrow-bracketing-in-work-choices/blob/main/data/clean-data.R). Roughly, there are columns referring to characteristics such as:
+
+-   demographics,
+
+-   the treatment (from 1 to 6: "both", "money/low", "none", "money", "before", "after"),
+
+-   session date and participant number,
+
+-   chosen option and chosen payment.
+
+# Cleaning
+
+According to `clean-data.r`, each step of cleaning is given a different number. For example, the first part of the cleaning corresponds to `df1`. The raw data is cleaned in the following way (I will go step-by-step and sometimes offer thoughts/suggestions):
+
+1.  Drop variables with no information (i.e. constant value). This is done through creating a function that returns TRUE if the length is equal to one. Then, the function is used at the end of a pipe to subset those columns returning TRUE – this is saved in object `colnames_to_discard`, which is subsequently filtered out of the new dataframe `df1`.
+
+    -   Improvement on transparency: explain why, in creating `colnames_to_discard`, the columns with prefix "wta" of suffix "incons" were filtered out.
+
+2.  Replace playerNr by unique pid (`rownumber()`), keep treatment information. In actuality, the code creates a new column `pid` that contains numbers for every row (or participant), but does not remove `playerNr` to "compare with raw data". Save as `df2`.
+
+    -   Improvement on transparency: unclear what is the point of keeping playerNr then. Otherwise clean code.
+
+3.  Document variable names. Here, column `scenario` is renamed as `scenariochosen`, and this is saved in object `df3`. Otherwise this is virtually identical to the previous data frame.
+
+    -   Improvement on accessibility: I would argue that the documentation that appears after the hashtags should be put in a documentation file, as it is counter-intuitive to search the explanation of every column in the cleaning file.
+
+    -   Unnecessary renaming (does not improve the understanding).
+
+4.  Collect rows by scenario. First, a function is made to end in *\_1* for scenario 1 and *\_2* for scenario two. Then, the names are standardized and data is pivoted on a long format (tidy data), and it is saved in `df4`.
+
+    -   Very good explanation in the code.
+
+5.  Identify inconsistent choices by scenarios. The function `is_consistent` is created to return 0 if the first argument is less than or equal to second parameter, otherwise 1. This function is used to create columns checking consistency, and then those columns' values are turned into logical arguments. Lastly, if by the last column (consistent15) there is a NA or vector consistent15 is equal to the result of zero an error is made.
+
+    -   Improvement on iterations: columns consistent 1 - 15 could have been made as a loop, otherwise I think it was quite annoying to do every line manually. Also, if the `is_consistent` function was not an ifelse, it would have returned a logical argument without the mutation creating df5 (line 126-127).
+
+    -   The relevance of stopifnot() is a little confusing, even though it does the job (of letting an error if the conditions are not true). This part could have been removed in the final code, however.
+
+6.  Get unique switching point for consistent choices by scenario x pid, or get the lowest switching point, and number of inconsistent choices per person per scenario. For this, the data was reshaped into a longer format, then grouped by `pid` and `scenario` and the number of inconsistent choices were summed up. The second switching point was set to 17 if they never chose higher work option. Then, the previous data frame was joined with these changes, and saved in `df6.`
+
+7.  Compute reservation wages from switching points and treatments/scenarios. The switching point was multiplied by 0.25 (\$) to calculate the reservation wage for each participant and unnecessary columns were dropped.
+
+8.  Recoding treatment and gender. For treatment, treatments 1,2,3 were recoded as "narrow", "low" and "broad" if before 1 March 2020; treatments 4 and bigger as "partial" if before 1 March; treatments 1 and 2 as "before" and "after", respectively, if after 1 March. In regards to gender, 1 was changed to "male", 2 to "female", 3 to "other".
+
+    -   I would have personally used ifelse() instead of case_when() because the function is much more known and straightforward, but would have led to essentially the same thing
+
+9.  Save smaller dataset for direct analysis
+
+    *!! In the explanation of cleaning the dataset there are 8 steps, but in reality there are 9 (missing step 8).*
+
+Now, moving forward to some applied changes.
+
+For `df4 -> df5`, I will suggest a less repetitive way of doing the same code. For illustration reasons, I will provide my modified code below. The logic behind this code was to create a loop checking for consistency for each of the 15 `wta`'s, instead of doing it manually. Additionally, I used more intuitive functions (such as`colnames()`and`ifelse()`) and made it so that the `is_consistent` function automatically returns a logical argument, instead of having to do that later (as in the original code).
+
+```{r necessary code, warning=FALSE, echo=FALSE, message=FALSE}
+#This is the code needed for the check to work (see below)
+require(tidyverse)
+
+fulldf <- read_csv("full_raw_data.csv")
+
+# Clean the dataset:
+# 1. Drop variables with no information (i.e. constant value)
+# 2. Replace playerNr by unique pid (rownumber()), keep treatment information
+#   - Keep playerNr to compare with raw data
+# 3. Document variable names
+# 4. Collect rows by scenario
+# 5. Identify inconsistent choices by scenarios
+# 6. Get unique switching point for consistent choices by scenario x pid
+#   - requires identifying the payment associated with the switching point
+# 7. Compute reservation wages from switching points and treatments/scenarios
+# 8. Save smaller dataset for direct analysis
+
+# Step 1: drop variables with no information that have constant values
+takes_on_only_one_value <- function(cname)  { 
+  length(unique(fulldf[[cname]])) == 1 
+}
+
+colnames_to_discard <- fulldf %>% 
+  select(-starts_with("wta"), -starts_with("incons")) %>%
+  colnames() %>%
+  as.list() %>%
+  keep(takes_on_only_one_value)
+
+df1 <- select(fulldf, -as_vector(colnames_to_discard))
+
+# Step 2: 
+df2 <- df1 %>%
+  mutate(pid = row_number()) %>%
+  select(pid, everything())
+
+# Step 3:
+
+df3 <- df2 %>% rename(scenariochosen = scenario)
+# Step 4
+df4a <- df3 %>%
+  rename_with(
+    function(x) {str_replace(x, "(\\d)(\\d\\d?)", "\\2_\\1")},
+    c(starts_with("wta"))
+  ) 
+
+df4 <- df4a %>%
+  pivot_longer(
+    c(starts_with("wta")),
+    names_to = c(".value", "scenario"),
+    names_pattern = "(.*)_(\\d)"
+  )
+
+```
+
+```{r transform1, message=FALSE, warning=FALSE}
+
+is_consistent <- function(wta0, wta1) {
+  wta0 <= wta1
+}
+
+df5b <- df4
+for (i in 1:15) {
+  col_name <- paste0("consistent", i)
+  
+  df5b[[col_name]] <- is_consistent(df4[[paste0("wta", i)]], df4[[paste0("wta", i + 1)]])
+}
+
+consistent_cols <- colnames(df5b)[startsWith(colnames(df5b), "consistent")]
+
+
+df5b[[col_name]] <- ifelse(is.na(df5b[[col_name]]), NA, as.logical(df5b[[col_name]]))
+
+```
+
+```{r necessary 2, message=FALSE, warning=FALSE, echo=FALSE}
+#To check whether the operation does exactly the same, let's do an identical() on my version (df5b) compared with original (df5). Below I will run original code. 
+is_consistent <- function(wta0, wta1) {
+  if_else( wta0 <= wta1, 0, 1)
+}
+
+df5a <- df4 %>%
+  mutate(
+    consistent1  = is_consistent(wta1, wta2),
+    consistent2  = is_consistent(wta2, wta3),
+    consistent3  = is_consistent(wta3, wta4),
+    consistent4  = is_consistent(wta4, wta5),
+    consistent5  = is_consistent(wta5, wta6),
+    consistent6  = is_consistent(wta6, wta7),
+    consistent7  = is_consistent(wta7, wta8),
+    consistent8  = is_consistent(wta8, wta9),
+    consistent9  = is_consistent(wta9, wta10),
+    consistent10 = is_consistent(wta10, wta11),
+    consistent11 = is_consistent(wta11, wta12),
+    consistent12 = is_consistent(wta12, wta13),
+    consistent13 = is_consistent(wta13, wta14),
+    consistent14 = is_consistent(wta14, wta15),
+    consistent15 = is_consistent(wta15, wta16)
+  )
+
+df5 <- df5a %>%
+  mutate(across(starts_with("consistent"), function(x) (x == 0)))
+
+stopifnot(all(is.na(df5$consistent15) | (df5$consistent15 == (df5a$consistent15 == 0))))
+
+```
+
+It is important to check, however, whether this version and the original one produce the same results. This can be done quickly through the `identical()` function, where `df5` is the original and `df6b` is my version of the code.
+
+```{r check 1, message=FALSE, warning=FALSE}
+identical(table(df5$consistent15), table(df5b$consistent15))
+```
+
+```{r necessary 3, message=FALSE, warning=FALSE, include=FALSE}
+#Code preceding question
+df6a <- df5 %>% 
+  select(pid, scenario, starts_with("wta"), starts_with("consistent")) %>%
+  pivot_longer(
+    c(starts_with("wta"), starts_with("consistent"),),
+    names_pattern = "(wta|consistent)(\\d\\d?)",
+    names_to = c(".value", "option_number")
+  ) %>%
+  mutate(option_number = parse_number(option_number)) 
+```
+
+Next, we will take a closer look at `df6a -> df6b`. We are interested in the transformation that the `df6b` dataframe suffered, therefore I will show the before and after below.
+
+**Before (or df6a)**
+
+```{r table 1, warning=FALSE, echo=FALSE, message=FALSE}
+knitr::kable(head(df6a))
+```
+
+**After (df6b)**
+
+```{r table 2, warning=FALSE, echo=FALSE, message=FALSE}
+df6b <- df6a %>%
+  group_by(pid, scenario) %>%
+  summarise(
+    inconsistent_choices = sum(!consistent, na.rm=TRUE),
+    switching_point = first(sort(option_number[wta == 2], na.last=TRUE), default = 17)
+  )
+knitr::kable(head(df6b))
+```
+
+Essentially, this code grouped the data frame by pid and scenario, and then 1. created a column representing the sum of `inconsistent choices` (!consistent), without NAs, and 2. created column `switching_point` that took the option numbers of `wta == 2`, sorted them and attributed number 17 to those choices where no valid option number is available.
+
+Let's take the `summarize()` step by step and check whether it does what we think it does. I will check the part with `inconsistent_choices`. If the code did what it should have, then the sum of `consistent == FALSE` in `df6a` should be identical to the sum of the newly-created `inconsistent_choices` in `df6b`. The former amounts to `r sum(df6a$consistent == FALSE, na.rm = TRUE)`, whereas the latter to `r sum(df6b$inconsistent_choices)`, essentially proving the transformation successful.
+
+For the second part, `switching_point` is supposed to filter the second `wta`, and then sort the filtered `option_number` in ascending order, with NAs at the end of the list. Practically this transformation identifies the lowest option number at which participants chose the higher work option. If there are no such choices, it defaults to 17. One hint for whether the code did what it should have is the number of 17s; in `df6a`, the sum of 17s is `r sum(df6a$option_number == 17, na.rm = TRUE)`, whereas for `df6b` it is `r sum(df6b$switching_point == 17, na.rm = TRUE)`, indicating that 17s were indeed created and giving us a clue that the transformation did take place.
+
+Another way (more convincing) is to create a mockup data frame with values which, if the transformation is correct, should be transformed to 17. Here is the table with mockup data.
+
+```{r table 3, warning=FALSE, echo=FALSE}
+knitr::kable(df_mock <- data.frame(
+  pid = c(1, 1, 2, 2, 3, 3),
+  scenario = c(1, 1, 1, 2, 2, 2),
+  option_number = c(1, 2, 1, NA, 2, NA),
+  wta = c(1, 2, 1, 2, 2, 2),
+  consistent = c(TRUE, TRUE, TRUE, FALSE, TRUE, FALSE)
+))
+```
+
+As seen below, this indeed happens. For the third entry of the above table, there is no valid option number where `wta` is equal to two, therefore it was defaulted to 17, as specified in the code.
+
+```{r table 4, warning=FALSE, echo=FALSE, message=FALSE}
+
+df_switching_point <- df_mock %>%
+  group_by(pid, scenario) %>%
+  summarise(
+    inconsistent_choices = sum(!consistent, na.rm=TRUE),
+    switching_point = first(sort(option_number[wta == 2], na.last=TRUE), default = 17)
+  )
+
+knitr::kable(df_switching_point)
+```
+
+# Exploration
+
+1.  The replication of Table 1 from [the study](https://trichotomy.xyz/publication/narrow-bracketing-in-work-choices/narrow-bracketing-in-work-choices.pdf):
+
+```{r rep1, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(AER)
+library(kableExtra)
+library(stargazer)
+library(lubridate)
+library(stringr)
+
+df_all <- read_csv("clean_data.csv") %>%
+  mutate(
+    gender    = as_factor(gender),
+    treatment = fct_relevel(as_factor(treatment), "BROAD", "NARROW", "LOW", "PARTIAL", "BEFORE", "AFTER"),
+    scenario  = as_factor(scenario)
+  ) %>%
+  ## Rename the treatments in line with the text
+  mutate(
+    treatment = dplyr::recode(treatment,
+                              BROAD   = "NONE",
+                              NARROW  = "BOTH",
+                              LOW     = "MONEY/LOW",
+                              PARTIAL = "MONEY")
+  )
+
+                                        # Summary Statistics
+
+
+  
+  summary_stats <- function(df) {
+  # Only consider participants who finish the welcome screen
+  df0 <- df %>%
+    filter(!is.na(time_welcome)) %>%
+    select(pid, scenario, inconsistent_choices) %>%
+    pivot_wider(names_from = scenario, values_from = inconsistent_choices) %>%
+    left_join(df %>% filter(scenario == "Scenario1"), by = "pid") %>%
+    mutate(
+      dropped_out   = is.na(time_questionnaire2),
+      inconsistent1 = (Scenario1 > 0),
+      inconsistent2 = (Scenario2 > 0)
+    )
+  
+  df1 <- df0 %>%
+    group_by(treatment) %>%
+    summarize(
+      observations  = n(),
+      attrition     = paste0(round(100*mean(dropped_out), digits=1), "%"),
+      final_obs     = as.character(sum(!dropped_out, na.rm=TRUE)),
+      share_female  = round(mean(gender == "Female", na.rm=TRUE), digits=2),
+      age           = round(mean(age, na.rm=TRUE),digits =1),
+      tediousness   = round(mean(tediousness, na.rm=TRUE), digits=2),
+      inconsistent1 = paste0(round(100*mean(inconsistent1, na.rm=TRUE), digits=1), "%"),
+      inconsistent2 = paste0(round(100*mean(inconsistent2, na.rm=TRUE), digits=1), "%")
+    ) %>%
+    mutate(treatment = as.character(treatment)) %>%
+    ungroup()
+
+  chi.p.value <- function(v) {
+    round(chisq.test(df0$treatment, df0[[v]], correct=FALSE)$p.value, digits = 2)
+  }
+
+  df1 %>%
+    rbind(c(
+      treatment     = "p-value",
+      observations  = "",
+      attrition     = chi.p.value("dropped_out"),
+      final_obs     = "",
+      share_female  = chi.p.value("gender"),
+      age           = chi.p.value("age"),
+      tediousness   = chi.p.value("tediousness"),
+      inconsistent1 = chi.p.value("inconsistent1"),
+      inconsistent2 = chi.p.value("inconsistent2")
+      ))}
+ 
+  
+  
+  
+
+ss <- t(summary_stats(df_all %>% filter(treatment %in% c("BOTH", "MONEY/LOW", "MONEY", "NONE"))))
+rownames(ss) <- c("", "Participants", "Attrition", "Final Participants", "Share Female", "Age", "Tediousness", "Scenario 1", "Scenario 2")
+
+kbl(
+  ss,
+  booktabs = T,
+  caption = "Summary statistics for main treatments.",
+  digits=2,
+  align='rrrrr',
+  format='html',
+  label='summary_statistics'
+) %>%
+  kable_styling(font_size=12 ) %>%
+  row_spec(1, bold = TRUE, hline_after = TRUE) %>%
+  row_spec(4, hline_after = TRUE) %>%
+  row_spec(7, hline_after = TRUE) %>%
+  pack_rows("Inconsistent Choices", 8, 9)
+```
+
+2.  Now, I will create similar summary statistics tables for some subsets of participants, which requires editing the code (and functions) accordingly. I opted to create yet another function named `subset_summary_stats` which should make things easier for doing different subsets. Here is a table for only males.
+
+```{r rep1_function plus males, message=FALSE, warning=FALSE, echo=FALSE}
+#basically same function, but don't throw error if comparison not meaningful
+subset_summary_stats <- function(df) {
+
+  df0 <- df %>%
+    filter(!is.na(time_welcome)) %>%
+    select(pid, scenario, inconsistent_choices) %>%
+    pivot_wider(names_from = scenario, values_from = inconsistent_choices) %>%
+    left_join(df %>% filter(scenario == "Scenario1"), by = "pid") %>%
+    mutate(
+      dropped_out   = is.na(time_questionnaire2),
+      inconsistent1 = (Scenario1 > 0),
+      inconsistent2 = (Scenario2 > 0)
+    )
+  
+  df1 <- df0 %>%
+    group_by(treatment) %>%
+    summarize(
+      observations  = n(),
+      attrition     = paste0(round(100*mean(dropped_out), digits=1), "%"),
+      final_obs     = as.character(sum(!dropped_out, na.rm=TRUE)),
+      share_female  = round(mean(gender == "Female", na.rm=TRUE), digits=2),
+      age           = round(mean(age, na.rm=TRUE),digits =1),
+      tediousness   = round(mean(tediousness, na.rm=TRUE), digits=2),
+      inconsistent1 = paste0(round(100*mean(inconsistent1, na.rm=TRUE), digits=1), "%"),
+      inconsistent2 = paste0(round(100*mean(inconsistent2, na.rm=TRUE), digits=1), "%")
+    ) %>%
+    mutate(treatment = as.character(treatment)) %>%
+    ungroup()
+
+  chi.p.value <- function(v) {
+    if (length(unique(df0$treatment)) > 1 && length(unique(df0[[v]])) > 1) {
+      round(chisq.test(df0$treatment, df0[[v]], correct=FALSE)$p.value, digits = 2)
+    } else {
+      return(NA) # Return NA if comparison is not meaningful
+    }
+  }
+  
+df <- df1 %>%
+    rbind(c(
+      treatment     = "p-value",
+      observations  = "",
+      attrition     = chi.p.value("dropped_out"),
+      final_obs     = "",
+      share_female  = chi.p.value("gender"),
+      age           = chi.p.value("age"),
+      tediousness   = chi.p.value("tediousness"),
+      inconsistent1 = chi.p.value("inconsistent1"),
+      inconsistent2 = chi.p.value("inconsistent2")
+    ))
+}
+
+
+#1. Proof of concept: it works with male subset
+male_df <- df_all[df_all$gender == "Male",]
+ss_male <- t(subset_summary_stats(male_df %>% filter(treatment %in% c("BOTH", "MONEY/LOW", "MONEY", "NONE"))))
+rownames(ss_male) <- c("", "Participants", "Attrition", "Final Participants", "Share Female", "Age", "Tediousness", "Scenario 1", "Scenario 2")
+
+kbl(
+  ss_male,
+  booktabs = T,
+  caption = "Summary statistics for main treatments.",
+  digits=2,
+  align='rrrrr',
+  format='html',
+  label='summary_statistics'
+) %>%
+  kable_styling(font_size=12 ) %>%
+  row_spec(1, bold = TRUE, hline_after = TRUE) %>%
+  row_spec(4, hline_after = TRUE) %>%
+  row_spec(7, hline_after = TRUE) %>%
+  pack_rows("Inconsistent Choices", 8, 9)
+
+
+
+```
+
+Lastly, summary statistics for young people (younger than 27):
+
+```{r age_subset, message=FALSE, warning=FALSE, echo=FALSE}
+#Another proof of concept: works with age
+
+young_df <- df_all[df_all$age < 27,] #sorry
+ss_young <- t(subset_summary_stats(young_df %>% filter(treatment %in% c("BOTH", "MONEY/LOW", "MONEY", "NONE"))))
+rownames(ss_young) <- c("", "Participants", "Attrition", "Final Participants", "Share Female", "Age", "Tediousness", "Scenario 1", "Scenario 2")
+
+kbl(
+  ss_young,
+  booktabs = T,
+  caption = "Summary statistics for main treatments (only young people).",
+  digits=2,
+  align='rrrrr',
+  format='html',
+  label='summary_statistics'
+) %>%
+  kable_styling(font_size=12 ) %>%
+  row_spec(1, bold = TRUE, hline_after = TRUE) %>%
+  row_spec(4, hline_after = TRUE) %>%
+  row_spec(7, hline_after = TRUE) %>%
+  pack_rows("Inconsistent Choices", 8, 9)
+
+
+```
+
+3.  The replication of Figure 2 from the study.
+
+```{r rep2, message=FALSE, warning=FALSE, echo=FALSE}
+# Code to generate tables of means and compares them for tests
+
+library(tidyverse)
+library(AER)
+library(kableExtra)
+library(stargazer)
+library(lubridate)
+library(stringr)
+
+options(knitr.kable.NA = '')
+
+                                        # Load data
+
+df_all <- read_csv("clean_data.csv") %>%
+  mutate(
+    gender    = as_factor(gender),
+    treatment = fct_relevel(as_factor(treatment), "BROAD", "NARROW", "LOW", "PARTIAL", "BEFORE", "AFTER"),
+    scenario  = as_factor(scenario)
+  ) %>%
+  ## Rename the treatments in line with the text
+  mutate(
+    treatment = dplyr::recode(treatment,
+                              BROAD   = "NONE",
+                              NARROW  = "BOTH",
+                              LOW     = "MONEY/LOW",
+                              PARTIAL = "MONEY")
+  )
+
+consistent_df_all <- df_all %>%
+  ## Keep only choices which were done consistently (drop only that scenario)
+  filter(inconsistent_choices == 0) %>%
+  ## Keep only people who finish the study and hence the tasks
+  filter(!is.na(time_questionnaire2)) %>%
+  select(pid, scenario, treatment, reservation_wage, inconsistent_choices, everything())
+
+## To avoid reusing inconsistent data by mistake
+df_all <- NULL
+
+consistent_df <- consistent_df_all %>%
+  filter(treatment %in% c("MONEY/LOW", "BOTH", "MONEY", "NONE"))
+
+
+# Various outputs and tests about means
+means_data <- function(df) {
+  paste_to_percent <- function(v) paste0(as.character(round(v)), "%")
+  df %>%
+    filter( !is.na(reservation_wage)) %>%
+    group_by(scenario, treatment) %>%
+    summarise(
+      res_wage   = mean(reservation_wage),
+      standard_error = sd(reservation_wage)/sqrt(n()),
+      share_upper_bound = paste_to_percent(100 * mean(reservation_wage > 4.01)),
+      N = n()
+    ) %>%
+    ungroup()
+}
+
+table_of_means_data <- function(means_df, caption, label, ntreatments = 4) {
+  kbl(
+    means_df,
+    "latex",
+    col.names = c("Treatment", "Res. Wage", "Std Err", "% upper bound", "N"),
+    booktabs = T,
+    caption = caption,
+    align = 'lrrrr',
+    digits=2,
+    label=label
+  ) %>%
+    kable_styling(latex_options=c("hold_position"), font_size=12) %>%
+    pack_rows("Scenario 1", 1, ntreatments) %>%
+    pack_rows("Scenario 2", ntreatments + 1, 2*ntreatments)
+}
+
+main_treatments <- c("NONE", "BOTH", "MONEY/LOW")
+main_df <- consistent_df %>%
+  filter(treatment %in% main_treatments)
+
+
+scenario1_label <- "Reservation wages in Scenario 1"
+scenario2_label <- "Reservation wages in Scenario 2"
+
+
+path_df_NONE_LOWMONEY <- function(sc) {
+  offset <- ifelse(sc == "Scenario1", 0, -0.10)
+  tibble(
+    treatment = c("NONE", "NONE", "MONEY/LOW", "MONEY/LOW"),
+    res_wage = c(3.40, 3.50, 3.50, 3.40) - offset,
+    scenario = rep(sc, 4)
+  )
+}
+
+path_df_NONE_BOTH <- function(sc) {
+  offset <- ifelse(sc == "Scenario1", 0.10, 0)
+  tibble(
+    treatment = c("NONE", "NONE", "BOTH", "BOTH"),
+    res_wage = c(3.25, 3.35, 3.35, 3.25) - offset,
+    scenario = rep(sc, 4)
+  )
+}
+
+path_df_BOTH_LOWMONEY <- function(sc) {
+  offset <- ifelse(sc == "Scenario1", 0.6, 0.25)
+  tibble(
+    treatment = c("BOTH", "BOTH", "MONEY/LOW", "MONEY/LOW"),
+    res_wage = c(3.25, 3.35, 3.35, 3.25) - offset,
+    scenario = rep(sc, 4)
+  )
+}
+
+path_df_BOTH_MONEY <- function(sc) {
+  offset <- ifelse(sc == "Scenario1", 0.45, 0.25)
+  tibble(
+    treatment = c("BOTH", "BOTH", "MONEY", "MONEY"),
+    res_wage = c(3.25, 3.35, 3.35, 3.25) - offset,
+    scenario = rep(sc, 4)
+  )
+}
+
+path_df_NONE_MONEY <- function(sc) {
+  offset <- ifelse(sc == "Scenario1", 0, -0.10)
+  tibble(
+    treatment = c("NONE", "NONE", "MONEY", "MONEY"),
+    res_wage = c(3.40, 3.50, 3.50, 3.40) - offset,
+    scenario = rep(sc, 4)
+  )
+}
+
+ann_text_main <- tibble(
+  treatment = c("NONE", "NONE", "BOTH", "NONE", "NONE", "BOTH"),
+  res_wage = c(3.60, 3.35, 2.85, 3.70, 3.45, 3.20),
+  lab = c("            < 0.001", "   < 0.001", "    0.106",
+          "             0.120", "     0.040", "     0.753"),
+  scenario = factor(
+    c(rep("Scenario1", 3), rep("Scenario2", 3)),
+    c("Scenario1", "Scenario2")
+  )
+)
+
+pvalue_plot <- main_df %>%
+  means_data() %>%
+  ggplot(mapping = aes(x = treatment, y = res_wage)) +
+  geom_col(aes(fill = treatment)) +
+  geom_errorbar(aes(ymin = res_wage - 2*standard_error, ymax = res_wage + 2*standard_error), width = 0.3) +
+  facet_wrap(~scenario, labeller = as_labeller(c(Scenario1 = scenario1_label, Scenario2 = scenario2_label))) +
+  geom_path(aes(group = scenario), path_df_NONE_LOWMONEY("Scenario1")) +
+  geom_path(aes(group = scenario), path_df_NONE_LOWMONEY("Scenario2")) +
+  geom_path(aes(group = scenario), path_df_NONE_BOTH("Scenario1")) +
+  geom_path(aes(group = scenario), path_df_NONE_BOTH("Scenario2")) +
+  geom_path(aes(group = scenario), path_df_BOTH_LOWMONEY("Scenario1")) +
+  geom_path(aes(group = scenario), path_df_BOTH_LOWMONEY("Scenario2")) +
+  geom_text(data = ann_text_main, aes(label = lab), hjust=0) +
+  labs(x = "Treatment", y = "Reservation Wage ($)", fill = "Treatment")
+
+pvalue_plot
+
+
+```
+
+```{r pvalues, warning=FALSE, echo=FALSE}
+subset_scenario1 <- consistent_df[consistent_df$scenario == "Scenario1" & consistent_df$treatment %in% c("NONE", "BOTH"),]
+
+t_test_result1 <- t.test(reservation_wage ~ treatment, subset_scenario1)
+
+subset_scenario2 <- consistent_df[consistent_df$scenario == "Scenario2" & consistent_df$treatment %in% c("MONEY/LOW", "BOTH"),]
+
+t_test_result2 <- t.test(reservation_wage ~ treatment, subset_scenario2)
+
+```
+
+-   I will compute two p-values from the figures just to see whether they are correct. My quick check confirms the values that were hard-coded in the replication data: my computed p-value for the `scenario 1` t-test comparing the means of treatments `"NONE"` and `"BOTH"` is `r t_test_result1$p.value`, whereas the `scenario 2` t-test comparing the treatments `"MONEY/LOW"` and `"BOTH"` is `r t_test_result2$p.value`; both values correspond to the labels of \<0.001, respectively 0.753, confirming the numbers.
+
+# Conclusions
+
+As feedback, it was quite interesting to do a partial replication on an actual study. Perhaps the biggest difficulty was to understand the context, as I lack academical knowledge in economics-related concepts such as bracketing. Overall I am happy that I could go around hundreds of lines of code and find what was needed with relative ease, despite the fact the process was time-consuming.
+
+# Code Explanation
+
+The file `means_and_tests.R` generates many deprecated features due to old age, however they are not too serious (the code is still usable). Regardless, let's look at two instances of deprecated code and how to fix it quickly.
+
+Between lines 651-653, this code gives the following warning:
+
+```{r warning}
+money_and_none_means <- consistent_df %>%
+  filter(treatment %in% c("NONE", "MONEY", "BOTH")) %>%
+  nest(-scenario, -treatment)
+```
+
+This is because nowadays specifying columns to be nested without naming them is a deprecated feature. The documentation suggests naming a nested column instead, so as to ensure clarity:
+
+```{r fix}
+money_and_none_means <- consistent_df %>%
+  filter(treatment %in% c("NONE", "MONEY", "BOTH")) %>%
+  nest(data = c(-scenario, -treatment)) #The change being "data"
+```
+
+Checking the whole code, I came to the conclusion this seems to be the only issue that produces the dozens of warnings in the code. Therefore, I will show one more example of a fix for this warning (lines 686-688):
+
+```{r warning2}
+money_both_table_pooled_gender <- consistent_df %>%
+  filter(treatment %in% c("MONEY", "BOTH", "MONEY/LOW")) %>%
+  nest(-scenario)
+```
+
+```{r fix2}
+money_both_table_pooled_gender <- consistent_df %>%
+  filter(treatment %in% c("MONEY", "BOTH", "MONEY/LOW")) %>%
+  nest(data = -scenario)
+```
